@@ -374,7 +374,7 @@ namespace ServiceStack
         private void HandleResponseError<TResponse>(Exception exception, AsyncState<TResponse> state)
         {
             var webEx = exception as WebException;
-            if (webEx.IsWebException() && null != webEx.Response) //in case of timeout (raised by timer), the WebException has not set the Response (Response is null)
+            if (webEx.IsWebException())
             {
                 var errorResponse = ((HttpWebResponse)webEx.Response);
                 Log.Error(webEx);
