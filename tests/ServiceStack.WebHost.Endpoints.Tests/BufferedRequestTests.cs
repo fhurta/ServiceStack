@@ -1,16 +1,8 @@
 ﻿using Funq;
 using NUnit.Framework;
-using ServiceStack.ServiceInterface.Admin;
 using ServiceStack.Text;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
 using System.Runtime.Serialization;
-using ServiceStack.Service;
-using ServiceStack.Messaging;
-using System.ServiceModel.Channels;
-using System;
-using System.Diagnostics;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -31,7 +23,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]
@@ -101,7 +92,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]

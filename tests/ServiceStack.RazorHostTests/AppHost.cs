@@ -1,21 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Funq;
-using ServiceStack.Common;
+using ServiceStack.Data;
 using ServiceStack.DataAnnotations;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.Sqlite;
 using ServiceStack.Razor;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack.Text;
 
 namespace ServiceStack.RazorHostTests
 {
-    [Route( "/rockstars" )]
-    [Route( "/rockstars/aged/{Age}" )]
-    [Route( "/rockstars/delete/{Delete}" )]
-    [Route( "/rockstars/{Id}" )]
+    [Route("/rockstars")]
+    [Route("/rockstars/aged/{Age}")]
+    [Route("/rockstars/delete/{Delete}")]
+    [Route("/rockstars/{Id}")]
     public class Rockstars
     {
         public int Id { get; set; }
@@ -38,48 +36,45 @@ namespace ServiceStack.RazorHostTests
         public List<Rockstar> Results { get; set; }
     }
 
-    public class RockstarsService : RestServiceBase<Rockstars>
+    public class RockstarsService : Service
     {
         public IDbConnectionFactory DbFactory { get; set; }
 
-        public override object OnGet( Rockstars request )
+        public object Get(Rockstars request)
         {
-            using( var db = DbFactory.OpenDbConnection() )
+            if (request.Delete == "reset")
             {
-                if( request.Delete == "reset" )
-                {
-                    db.DeleteAll<Rockstar>();
-                    db.Insert( Rockstar.SeedData );
-                }
-                else if( request.Delete.IsInt() )
-                {
-                    db.DeleteById<Rockstar>( request.Delete.ToInt() );
-                }
-
-                return new RockstarsResponse
-                {
-                    Aged = request.Age,
-                    Total = db.GetScalar<int>( "select count(*) from Rockstar" ),
-                    Results = request.Id != default( int ) ?
-                        db.Select<Rockstar>( q => q.Id == request.Id )
-                          : request.Age.HasValue ?
-                        db.Select<Rockstar>( q => q.Age == request.Age.Value )
-                          : db.Select<Rockstar>()
-                };
+                Db.DeleteAll<Rockstar>();
+                Db.Insert(Rockstar.SeedData);
             }
+            else if (request.Delete.IsInt())
+            {
+                Db.DeleteById<Rockstar>(request.Delete.ToInt());
+            }
+
+            return new RockstarsResponse
+            {
+                Aged = request.Age,
+                Total = Db.Scalar<int>("select count(*) from Rockstar"),
+                Results = request.Id != default(int) ?
+                    Db.Select<Rockstar>(q => q.Id == request.Id)
+                      : request.Age.HasValue ?
+                    Db.Select<Rockstar>(q => q.Age == request.Age.Value)
+                      : Db.Select<Rockstar>()
+            };
         }
 
-        public override object OnPost( Rockstars request )
+        public object Post(Rockstars request)
         {
-            using( var db = DbFactory.OpenDbConnection() )
+            using (var db = DbFactory.OpenDbConnection())
             {
-                db.Insert( request.TranslateTo<Rockstar>() );
-                return OnGet( new Rockstars() );
+                db.Insert(request.ConvertTo<Rockstar>());
+                return Get(new Rockstars());
             }
         }
     }
 
-    [Route( "/viewmodel/{Id}" )]
+    [Route("/viewmodel/{Id}")]
     public class ViewThatUsesLayoutAndModel
     {
         public string Id { get; set; }
@@ -91,7 +86,7 @@ namespace ServiceStack.RazorHostTests
         public List<string> Results { get; set; }
     }
 
-    public class ViewService : ServiceInterface.Service
+    public class ViewService : Service
     {
         public object Any(ViewThatUsesLayoutAndModel request)
         {
@@ -126,7 +121,7 @@ namespace ServiceStack.RazorHostTests
         public int? Age { get; set; }
 
         public Rockstar() { }
-        public Rockstar( int id, string firstName, string lastName, int age )
+        public Rockstar(int id, string firstName, string lastName, int age)
         {
             Id = id;
             FirstName = firstName;
@@ -135,8 +130,6 @@ namespace ServiceStack.RazorHostTests
         }
     }
 
-
-
     public class AppHost : AppHostBase
     {
         public AppHost()
@@ -144,15 +137,14 @@ namespace ServiceStack.RazorHostTests
 
         public override void Configure(Container container)
         {
-            Plugins.Add( new RazorFormat()
-                {
-                    //TemplateProvider = {CompileInParallelWithNoOfThreads = 0}
-                } );
+            Plugins.Add(new RazorFormat {
+                //TemplateProvider = {CompileInParallelWithNoOfThreads = 0}
+            });
 
             container.Register(new DataSource());
 
             container.Register<IDbConnectionFactory>(
-                new OrmLiteConnectionFactory(":memory:", false, SqliteOrmLiteDialectProvider.Instance));
+                new OrmLiteConnectionFactory(":memory:", SqliteDialect.Provider));
 
             using (var db = container.Resolve<IDbConnectionFactory>().OpenDbConnection())
             {

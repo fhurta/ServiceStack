@@ -1,7 +1,5 @@
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -25,21 +23,17 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public ResponseStatus ResponseStatus { get; set; }
 	}
 
-	public class CustomFormDataService
-		: RestServiceBase<CustomFormData> // which inherits from IRequiresRequestContext
+	public class CustomFormDataService : Service
 	{
 		//Parsing: &first-name=tom&item-0=blah&item-1-delete=1
-		public override object OnPost(CustomFormData request)
+		public object Post(CustomFormData request)
 		{
-			var httpReq = base.RequestContext.Get<IHttpRequest>();
-
 			return new CustomFormDataResponse
 			{
-				FirstName = httpReq.FormData["first-name"],
-				Item0 = httpReq.FormData["item-0"],
-				Item1Delete = httpReq.FormData["item-1-delete"]
+				FirstName = Request.FormData["first-name"],
+                Item0 = Request.FormData["item-0"],
+                Item1Delete = Request.FormData["item-1-delete"]
 			};
 		}
 	}
-
 }

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.ServiceModel;
-using ServiceStack.Text;
+using ServiceStack.Web;
 using ServiceStack.WebHost.IntegrationTests.Tests;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
@@ -43,13 +40,13 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
     }
 
     [IocRequestFilter]
-    public class IocScopeService : IService<IocScope>, IDisposable
+    public class IocScopeService : IService, IDisposable
     {
         public FunqRequestScope FunqRequestScope { get; set; }
         public FunqSingletonScope FunqSingletonScope { get; set; }
         public FunqNoneScope FunqNoneScope { get; set; }
 
-        public object Execute(IocScope request)
+        public object Any(IocScope request)
         {
             var response = new IocScopeResponse {
                 Results = {
@@ -70,8 +67,8 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
             DisposedCount++;
         }
     }
-    
-    public class IocRequestFilterAttribute : Attribute, IHasRequestFilter
+
+    public class IocRequestFilterAttribute : AttributeBase, IHasRequestFilter
     {
         public FunqSingletonScope FunqSingletonScope { get; set; }
         public FunqRequestScope FunqRequestScope { get; set; }
@@ -79,9 +76,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 
         public int Priority { get; set; }
 
-        public void RequestFilter(IHttpRequest req, IHttpResponse res, object requestDto)
-        {
-        }
+        public void RequestFilter(IRequest req, IResponse res, object requestDto) {}
 
         public IHasRequestFilter Copy()
         {

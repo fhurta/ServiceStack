@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using NUnit.Framework;
-using ServiceStack.Common.Utils;
+using ServiceStack.Auth;
 using ServiceStack.Configuration;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.SqlServer;
-using ServiceStack.OrmLite.Sqlite;
 using ServiceStack.Redis;
-using ServiceStack.ServiceInterface.Auth;
-using ServiceStack.Text;
 
 namespace ServiceStack.Common.Tests.OAuth
 {
@@ -19,8 +15,7 @@ namespace ServiceStack.Common.Tests.OAuth
         private OAuthUserSessionTests tests;
         private readonly List<IUserAuthRepository> userAuthRepositorys = new List<IUserAuthRepository>();
 
-        OrmLiteConnectionFactory dbFactory = new OrmLiteConnectionFactory(
-            ":memory:", false, SqliteOrmLiteDialectProvider.Instance);
+        readonly OrmLiteConnectionFactory dbFactory = new OrmLiteConnectionFactory(":memory:", SqliteDialect.Provider);
 
         [SetUp]
         public void SetUp()
@@ -47,10 +42,11 @@ namespace ServiceStack.Common.Tests.OAuth
 				else
 				{
 					var sqliteInMemoryRepo = new OrmLiteAuthRepository(dbFactory);
-					dbFactory.Run(db => {
-						db.CreateTable<UserAuth>(true);
-						db.CreateTable<UserOAuthProvider>(true);
-					});
+                    using (var db = dbFactory.Open())
+                    {
+						db.DropAndCreateTable<UserAuth>();
+						db.DropAndCreateTable<UserAuthDetails>();
+					}
 					sqliteInMemoryRepo.Clear();
 					userAuthRepositorys.Add(sqliteInMemoryRepo);
 

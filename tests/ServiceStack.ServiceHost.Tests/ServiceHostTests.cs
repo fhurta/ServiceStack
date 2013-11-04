@@ -1,29 +1,37 @@
 ﻿using System;
 using Funq;
 using NUnit.Framework;
+using ServiceStack.Host;
 using ServiceStack.ServiceHost.Tests.Support;
 using ServiceStack.ServiceHost.Tests.TypeFactory;
-using ServiceStack.Text;
-using ServiceStack.Text.Common;
+using ServiceStack.Testing;
 
 namespace ServiceStack.ServiceHost.Tests
 {
 	[TestFixture]
 	public class ServiceHostTests
 	{
-		private ServiceController serviceController;
+	    private ServiceController serviceController;
+	    private ServiceStackHost appHost;
 
 		[SetUp]
-		public void OnBeforeEachTest()
+        public void SetUp()
 		{
-			serviceController = new ServiceController(null);
+            appHost = new BasicAppHost().Init();
+            serviceController = appHost.ServiceController;
 		}
+        
+        [TearDown]
+        public void TearDown()
+        {
+            appHost.Dispose();
+        }
 
 		[Test]
 		public void Can_execute_BasicService()
 		{
-			serviceController.Register(() => new BasicService());
-			var result = serviceController.Execute(new BasicRequest()) as BasicRequestResponse;
+            serviceController.RegisterService(typeof(BasicService));
+            var result = serviceController.Execute(new EmptyRequest()) as EmptyRequestResponse;
 
 			Assert.That(result, Is.Not.Null);
 		}
@@ -31,13 +39,13 @@ namespace ServiceStack.ServiceHost.Tests
 		[Test]
 		public void Can_execute_BasicService_from_dynamic_Type()
 		{
-			var requestType = typeof(BasicRequest);
+			var requestType = typeof(EmptyRequest);
 
-			serviceController.Register(requestType, typeof(BasicService));
+            serviceController.RegisterService(typeof(BasicService));
 
 			object request = Activator.CreateInstance(requestType);
 
-			var result = serviceController.Execute(request) as BasicRequestResponse;
+            var result = serviceController.Execute(request) as EmptyRequestResponse;
 
 			Assert.That(result, Is.Not.Null);
 		}
@@ -77,22 +85,31 @@ namespace ServiceStack.ServiceHost.Tests
 			Assert.That(service.Bar, Is.Not.Null);
 		}
 
+        private MockHttpRequest CreateContext(string httpMethod)
+        {
+            var ctx = new MockHttpRequest { HttpMethod = httpMethod };
+            return ctx;
+        }
+
 		[Test]
 		public void Can_execute_RestTestService()
 		{
-			serviceController.Register(() => new RestTestService());
-			var result = serviceController.Execute(new RestTest()) as RestTestResponse;
+            serviceController.RegisterService(typeof(RestTestService));
+
+            var result = serviceController.Execute(new RestTest(),
+                CreateContext(HttpMethods.Options)) as RestTestResponse;
 
 			Assert.That(result, Is.Not.Null);
-			Assert.That(result.MethodName, Is.EqualTo("Execute"));
+			Assert.That(result.MethodName, Is.EqualTo("Any"));
 		}
 
-		[Test]
+		[Test] 
 		public void Can_RestTestService_GET()
-		{
-			serviceController.Register(() => new RestTestService());
-			var result = serviceController.Execute(new RestTest(),
-				new HttpRequestContext((object)null, EndpointAttributes.HttpGet)) as RestTestResponse;
+		{            
+            serviceController.RegisterService(typeof(RestTestService));
+
+            var result = serviceController.Execute(new RestTest(),
+                CreateContext(HttpMethods.Get)) as RestTestResponse;
 
 			Assert.That(result, Is.Not.Null);
 			Assert.That(result.MethodName, Is.EqualTo("Get"));
@@ -101,9 +118,10 @@ namespace ServiceStack.ServiceHost.Tests
 		[Test]
 		public void Can_RestTestService_PUT()
 		{
-			serviceController.Register(() => new RestTestService());
-			var result = serviceController.Execute(new RestTest(),
-				new HttpRequestContext((object)null, EndpointAttributes.HttpPut)) as RestTestResponse;
+            serviceController.RegisterService(typeof(RestTestService));
+
+            var result = serviceController.Execute(new RestTest(),
+                CreateContext(HttpMethods.Put)) as RestTestResponse;
 
 			Assert.That(result, Is.Not.Null);
 			Assert.That(result.MethodName, Is.EqualTo("Put"));
@@ -112,9 +130,10 @@ namespace ServiceStack.ServiceHost.Tests
 		[Test]
 		public void Can_RestTestService_POST()
 		{
-			serviceController.Register(() => new RestTestService());
-			var result = serviceController.Execute(new RestTest(),
-				new HttpRequestContext((object)null, EndpointAttributes.HttpPost)) as RestTestResponse;
+            serviceController.RegisterService(typeof(RestTestService));
+
+            var result = serviceController.Execute(new RestTest(),
+                CreateContext(HttpMethods.Post)) as RestTestResponse;
 
 			Assert.That(result, Is.Not.Null);
 			Assert.That(result.MethodName, Is.EqualTo("Post"));
@@ -123,9 +142,10 @@ namespace ServiceStack.ServiceHost.Tests
 		[Test]
 		public void Can_RestTestService_DELETE()
 		{
-			serviceController.Register(() => new RestTestService());
-			var result = serviceController.Execute(new RestTest(),
-				new HttpRequestContext((object)null, EndpointAttributes.HttpDelete)) as RestTestResponse;
+            serviceController.RegisterService(typeof(RestTestService));
+
+            var result = serviceController.Execute(new RestTest(),
+                CreateContext(HttpMethods.Delete)) as RestTestResponse;
 
 			Assert.That(result, Is.Not.Null);
 			Assert.That(result.MethodName, Is.EqualTo("Delete"));

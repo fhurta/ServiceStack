@@ -1,19 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.Common.Extensions;
-using ServiceStack.Common.Utils;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
+using ServiceStack.Testing;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Extensions;
-using ServiceStack.WebHost.Endpoints.Support.Mocks;
-using ServiceStack.WebHost.Endpoints.Tests.Mocks;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -31,7 +24,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
     [Route("/partialfiles/text")]
     public class PartialFromText { }
 
-    public class PartialContentService : ServiceInterface.Service
+    public class PartialContentService : Service
     {
         public object Get(PartialFile request)
         {
@@ -100,7 +93,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             if (appHost != null) appHost.Dispose();
-            appHost = null;
         }
 
         [Test]
@@ -182,10 +174,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [Test]
-        public void Can_respond_to_non_range_requests_with_200_OK_response()
+        public async Task Can_respond_to_non_range_requests_with_200_OK_response()
         {
-            var mockRequest = new HttpRequestMock();
-            var mockResponse = new HttpResponseMock();
+            var mockRequest = new MockHttpRequest();
+            var mockResponse = new MockHttpResponse();
 
             string customText = "1234567890";
             byte[] customTextBytes = customText.ToUtf8Bytes();
@@ -194,10 +186,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             var httpResult = new HttpResult(ms, "audio/mpeg");            
 
-            bool reponseWasAutoHandled = mockResponse.WriteToResponse(mockRequest, httpResult);
+            bool reponseWasAutoHandled = await mockResponse.WriteToResponse(mockRequest, httpResult);
             Assert.That(reponseWasAutoHandled, Is.True);
 
-            string writtenString = mockResponse.GetOutputStreamAsString();
+            string writtenString = mockResponse.ReadAsString();
             Assert.That(writtenString, Is.EqualTo(customText));
 
             Assert.That(mockResponse.Headers["Content-Range"], Is.Null);
@@ -206,10 +198,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [Test]
-        public void Can_seek_from_beginning_to_end()
+        public async Task Can_seek_from_beginning_to_end()
         {
-            var mockRequest = new HttpRequestMock();
-            var mockResponse = new HttpResponseMock();
+            var mockRequest = new MockHttpRequest();
+            var mockResponse = new MockHttpResponse();
 
             mockRequest.Headers[HttpHeaders.Range] = "bytes=0";
 
@@ -220,10 +212,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             var httpResult = new HttpResult(ms, "audio/mpeg");
 
-            bool reponseWasAutoHandled = mockResponse.WriteToResponse(mockRequest, httpResult);
+            bool reponseWasAutoHandled = await mockResponse.WriteToResponse(mockRequest, httpResult);
             Assert.That(reponseWasAutoHandled, Is.True);
 
-            string writtenString = mockResponse.GetOutputStreamAsString();
+            string writtenString = mockResponse.ReadAsString();
             Assert.That(writtenString, Is.EqualTo(customText));
 
             Assert.That(mockResponse.Headers["Content-Range"], Is.EqualTo("bytes 0-9/10"));
@@ -233,10 +225,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [Test]
-        public void Can_seek_from_beginning_to_middle()
+        public async Task Can_seek_from_beginning_to_middle()
         {
-            var mockRequest = new HttpRequestMock();
-            var mockResponse = new HttpResponseMock();
+            var mockRequest = new MockHttpRequest();
+            var mockResponse = new MockHttpResponse();
 
             mockRequest.Headers[HttpHeaders.Range] = "bytes=0-2";
 
@@ -248,10 +240,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             var httpResult = new HttpResult(ms, "audio/mpeg");
 
-            bool reponseWasAutoHandled = mockResponse.WriteToResponse(mockRequest, httpResult);
+            bool reponseWasAutoHandled = await mockResponse.WriteToResponse(mockRequest, httpResult);
             Assert.That(reponseWasAutoHandled, Is.True);
 
-            string writtenString = mockResponse.GetOutputStreamAsString();
+            string writtenString = mockResponse.ReadAsString();
             Assert.That(writtenString, Is.EqualTo("123"));
 
             Assert.That(mockResponse.Headers["Content-Range"], Is.EqualTo("bytes 0-2/10"));
@@ -261,11 +253,11 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [Test]
-        public void Can_seek_from_middle_to_end()
+        public async Task Can_seek_from_middle_to_end()
         {
-            var mockRequest = new HttpRequestMock();
+            var mockRequest = new MockHttpRequest();
             mockRequest.Headers.Add("Range", "bytes=4-");
-            var mockResponse = new HttpResponseMock();
+            var mockResponse = new MockHttpResponse();
 
             string customText = "1234567890";
             byte[] customTextBytes = customText.ToUtf8Bytes();
@@ -275,10 +267,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             var httpResult = new HttpResult(ms, "audio/mpeg");
 
-            bool reponseWasAutoHandled = mockResponse.WriteToResponse(mockRequest, httpResult);
+            bool reponseWasAutoHandled = await mockResponse.WriteToResponse(mockRequest, httpResult);
             Assert.That(reponseWasAutoHandled, Is.True);
 
-            string writtenString = mockResponse.GetOutputStreamAsString();
+            string writtenString = mockResponse.ReadAsString();
             Assert.That(writtenString, Is.EqualTo("567890"));
 
             Assert.That(mockResponse.Headers["Content-Range"], Is.EqualTo("bytes 4-9/10"));
@@ -288,11 +280,11 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [Test]
-        public void Can_seek_from_middle_to_middle()
+        public async Task Can_seek_from_middle_to_middle()
         {
-            var mockRequest = new HttpRequestMock();
+            var mockRequest = new MockHttpRequest();
             mockRequest.Headers.Add("Range", "bytes=3-5");
-            var mockResponse = new HttpResponseMock();
+            var mockResponse = new MockHttpResponse();
 
             string customText = "1234567890";
             byte[] customTextBytes = customText.ToUtf8Bytes();
@@ -302,10 +294,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             var httpResult = new HttpResult(ms, "audio/mpeg");
 
-            bool reponseWasAutoHandled = mockResponse.WriteToResponse(mockRequest, httpResult);
+            bool reponseWasAutoHandled = await mockResponse.WriteToResponse(mockRequest, httpResult);
             Assert.That(reponseWasAutoHandled, Is.True);
 
-            string writtenString = mockResponse.GetOutputStreamAsString();
+            string writtenString = mockResponse.ReadAsString();
             Assert.That(writtenString, Is.EqualTo("456"));
 
             Assert.That(mockResponse.Headers["Content-Range"], Is.EqualTo("bytes 3-5/10"));
@@ -315,7 +307,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [Test]
-        public void Can_use_fileStream()
+        public async Task Can_use_fileStream()
         {
             byte[] fileBytes = uploadedTextFile.ReadFully();
             string fileText = Encoding.ASCII.GetString(fileBytes);
@@ -323,16 +315,16 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             "File content size {0}".Print(fileBytes.Length);
             "File content is {0}".Print(fileText);
 
-            var mockRequest = new HttpRequestMock();
-            var mockResponse = new HttpResponseMock();
+            var mockRequest = new MockHttpRequest();
+            var mockResponse = new MockHttpResponse();
             mockRequest.Headers.Add("Range", "bytes=6-8");
 
             var httpResult = new HttpResult(uploadedTextFile, "audio/mpeg");
 
-            bool reponseWasAutoHandled = mockResponse.WriteToResponse(mockRequest, httpResult);
+            bool reponseWasAutoHandled = await mockResponse.WriteToResponse(mockRequest, httpResult);
             Assert.That(reponseWasAutoHandled, Is.True);
 
-            string writtenString = mockResponse.GetOutputStreamAsString();
+            string writtenString = mockResponse.ReadAsString();
             Assert.That(writtenString, Is.EqualTo(fileText.Substring(6, 3)));
 
             Assert.That(mockResponse.Headers["Content-Range"], Is.EqualTo("bytes 6-8/33"));

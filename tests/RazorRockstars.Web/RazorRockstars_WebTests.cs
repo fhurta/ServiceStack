@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using NUnit.Framework;
+using ServiceStack;
 using ServiceStack.Common;
 using ServiceStack.Text;
 
@@ -270,7 +271,7 @@ namespace RazorRockstars.Web
             AssertStatus(Host + "/fallback/extrapath", HttpStatusCode.NotFound);
         }
 
-	    [Test]
+	    [Explicit,Test]
 	    public void Test_multithread_errors()
 	    {
 	        var times = 1000;

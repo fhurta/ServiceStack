@@ -1,11 +1,3 @@
-using System.Runtime.Serialization;
-using System.Web;
-using ServiceStack.CacheAccess;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Extensions;
-
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
 	public class CustomSession
@@ -25,7 +17,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public CustomSession UnTyped { get; set; }
 	}
 
-	public class SessionService : ServiceInterface.Service
+	public class SessionService : Service
 	{
         public object Any(Session request)
 		{

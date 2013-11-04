@@ -1,15 +1,9 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
 using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
-using System.Collections.Specialized;
-using System.Linq;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -29,7 +23,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             /// </summary>
             /// <param name="container">SS's funq container</param>
             public override void Configure(Funq.Container container) {
-                EndpointHostConfig.Instance.GlobalResponseHeaders.Clear();
+                HostContext.Config.GlobalResponseHeaders.Clear();
 
 			//Signal advanced web browsers what HTTP Methods you accept
 			//base.SetConfig(new EndpointHostConfig());
@@ -51,7 +45,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             public string Text { get; set; }
         }
 
-        public class TimedService : ServiceStack.ServiceInterface.Service
+        public class TimedService : Service
         {
             public object Any(PlainText request) 
             {
@@ -89,7 +83,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public void OnTestFixtureTearDown()
 		{
 			appHost.Dispose();
-			appHost = null;
 
             //Clear the logs so other tests dont inherit log entries
             TestLogger.GetLogs().Clear();

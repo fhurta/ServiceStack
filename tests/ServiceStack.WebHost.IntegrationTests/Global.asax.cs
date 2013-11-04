@@ -1,26 +1,20 @@
 ﻿using System;
 using Funq;
+using ServiceStack.Auth;
 using ServiceStack.Authentication.OpenId;
-using ServiceStack.CacheAccess;
-using ServiceStack.CacheAccess.Providers;
-using ServiceStack.Common;
-using ServiceStack.Common.Utils;
+using ServiceStack.Caching;
 using ServiceStack.Configuration;
+using ServiceStack.Data;
 using ServiceStack.Messaging;
+using ServiceStack.Messaging.Redis;
 using ServiceStack.MiniProfiler;
 using ServiceStack.MiniProfiler.Data;
 using ServiceStack.OrmLite;
-using ServiceStack.Plugins.ProtoBuf;
+using ServiceStack.ProtoBuf;
 using ServiceStack.Redis;
-using ServiceStack.Redis.Messaging;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Admin;
-using ServiceStack.ServiceInterface.Auth;
 using ServiceStack.Api.Swagger;
-using ServiceStack.ServiceInterface.Validation;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack.Validation;
 using ServiceStack.WebHost.IntegrationTests.Services;
 using ServiceStack.WebHost.IntegrationTests.Tests;
 
@@ -44,7 +38,7 @@ namespace ServiceStack.WebHost.IntegrationTests
 					req.Items["_DataSetAtPreRequestFilters"] = true;
 				});
 
-                this.RequestFilters.Add((req, res, dto) => {
+                this.GlobalRequestFilters.Add((req, res, dto) => {
                     req.Items["_DataSetAtRequestFilters"] = true;
 
                     var requestFilter = dto as RequestFilter;
@@ -81,7 +75,10 @@ namespace ServiceStack.WebHost.IntegrationTests
                 //    c => new SessionFactory(c.Resolve<ICacheClient>()));
 
                 var dbFactory = this.Container.Resolve<IDbConnectionFactory>();
-                dbFactory.Run(db => db.CreateTable<Movie>(true));
+
+                using (var db = dbFactory.Open())
+                    db.DropAndCreateTable<Movie>();
+
                 ModelConfig<Movie>.Id(x => x.Title);
                 Routes
                     .Add<Movies>("/custom-movies", "GET, OPTIONS")
@@ -110,7 +107,7 @@ namespace ServiceStack.WebHost.IntegrationTests
 
 
                 //var onlyEnableFeatures = Feature.All.Remove(Feature.Jsv | Feature.Soap);
-                SetConfig(new EndpointHostConfig {
+                SetConfig(new HostConfig {
                     GlobalResponseHeaders = {
                         { "Access-Control-Allow-Origin", "*" },
                         { "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS" },
@@ -135,7 +132,7 @@ namespace ServiceStack.WebHost.IntegrationTests
             private void ConfigureAuth(Funq.Container container)
             {
                 Routes
-                    .Add<Registration>("/register");
+                    .Add<Register>("/register");
 
                 var appSettings = new AppSettings();
 
@@ -152,10 +149,10 @@ namespace ServiceStack.WebHost.IntegrationTests
 
                 Plugins.Add(new RegistrationFeature());
 
-                container.Register<IUserAuthRepository>(c =>
+                container.Register<IAuthRepository>(c =>
                     new OrmLiteAuthRepository(c.Resolve<IDbConnectionFactory>()));
 
-                var authRepo = (OrmLiteAuthRepository)container.Resolve<IUserAuthRepository>();
+                var authRepo = (OrmLiteAuthRepository)container.Resolve<IAuthRepository>();
                 if (new AppSettings().Get("RecreateTables", true))
                     authRepo.DropAndReCreateTables();
                 else
@@ -179,7 +176,7 @@ namespace ServiceStack.WebHost.IntegrationTests
         {
             Profiler.Stop();
 
-            var mqHost = AppHostBase.Instance.Container.TryResolve<IMessageService>();
+            var mqHost = HostContext.TryResolve<IMessageService>();
             if (mqHost != null)
                 mqHost.Start();
         }

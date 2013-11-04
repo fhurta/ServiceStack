@@ -1,6 +1,7 @@
 ﻿using System.Web;
-using ServiceStack.WebHost.Endpoints;
-using ServiceStack.WebHost.Endpoints.Metadata;
+using ServiceStack.Host;
+using ServiceStack.Host.Handlers;
+using ServiceStack.Metadata;
 
 namespace ServiceStack
 {
@@ -59,28 +60,28 @@ namespace ServiceStack
 
                 case "types":
                     
-                    if (EndpointHost.Config == null
-                        || EndpointHost.Config.MetadataTypesConfig == null)
+                    if (HostContext.Config == null
+                        || HostContext.Config.MetadataTypesConfig == null)
                         return null;
 
-                    if (EndpointHost.Config.MetadataTypesConfig.BaseUrl == null)
-                        EndpointHost.Config.MetadataTypesConfig.BaseUrl = ServiceStackHttpHandlerFactory.GetBaseUrl();
+                    if (HostContext.Config.MetadataTypesConfig.BaseUrl == null)
+                        HostContext.Config.MetadataTypesConfig.BaseUrl = HttpHandlerFactory.GetBaseUrl();
 
-                    return new MetadataTypesHandler { Config = EndpointHost.AppHost.Config.MetadataTypesConfig };
+                    return new MetadataTypesHandler { Config = HostContext.Config.MetadataTypesConfig };
 
                 case "operations":
                     
-                    return new ActionHandler((httpReq, httpRes) => 
-                        EndpointHost.Config.HasAccessToMetadata(httpReq, httpRes) 
-                            ? EndpointHost.Metadata.GetOperationDtos()
+                    return new CustomResponseHandler((httpReq, httpRes) => 
+                        HostContext.AppHost.HasAccessToMetadata(httpReq, httpRes) 
+                            ? HostContext.Metadata.GetOperationDtos()
                             : null, "Operations");
 
                 default:
                     string contentType;
-                    if (EndpointHost.ContentTypeFilter
+                    if (HostContext.ContentTypes
                         .ContentTypeFormats.TryGetValue(pathController, out contentType))
                     {
-                        var format = Common.Web.ContentType.GetContentFormat(contentType);
+                        var format = ContentFormat.GetContentFormat(contentType);
                         return new CustomMetadataHandler(contentType, format);
                     }
                     break;

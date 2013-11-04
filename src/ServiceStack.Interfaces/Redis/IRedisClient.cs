@@ -5,26 +5,23 @@
 // Authors:
 //   Demis Bellot (demis.bellot@gmail.com)
 //
-// Copyright 2013 ServiceStack.
+// Copyright 2013 Service Stack LLC. All Rights Reserved.
 //
-// Licensed under the same terms of Redis and ServiceStack: new BSD license.
+// Licensed under the same terms of ServiceStack.
 //
 
 using System;
 using System.Collections.Generic;
-using ServiceStack.CacheAccess;
-using ServiceStack.DataAccess;
-using ServiceStack.DesignPatterns.Model;
+using ServiceStack.Caching;
+using ServiceStack.Data;
+using ServiceStack.Model;
 using ServiceStack.Redis.Generic;
 using ServiceStack.Redis.Pipeline;
-#if WINDOWS_PHONE
-using ServiceStack.Text.WP;
-#endif
 
 namespace ServiceStack.Redis
 {
 	public interface IRedisClient
-		: IBasicPersistenceProvider, ICacheClient
+		: IEntityStore, ICacheClient
 	{
 		//Basic Redis Connection operations
 		long Db { get; set; }
@@ -63,7 +60,6 @@ namespace ServiceStack.Redis
 		Dictionary<string, T> GetValuesMap<T>(List<string> keys);
 		long AppendToValue(string key, string value);
 		void RenameKey(string fromName, string toName);
-		string GetSubstring(string key, int fromIndex, int toIndex);
 
         //store POCOs as hash
 	    T GetFromHash<T>(object id);
@@ -88,13 +84,6 @@ namespace ServiceStack.Redis
 
 		//Store entities without registering entity ids
 		void WriteAll<TEntity>(IEnumerable<TEntity> entities);
-
-		/// <summary>
-		/// Returns a high-level typed client API
-		/// Shorter Alias is As&lt;T&gt;();
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		IRedisTypedClient<T> GetTypedClient<T>();
 
 		/// <summary>
 		/// Returns a high-level typed client API

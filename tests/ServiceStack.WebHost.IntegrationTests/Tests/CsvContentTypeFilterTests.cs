@@ -4,9 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.Text;
+using ServiceStack.Web;
 using ServiceStack.WebHost.IntegrationTests.Services;
 
 namespace ServiceStack.WebHost.IntegrationTests.Tests
@@ -26,7 +25,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
         public void SetUp()
         {
             // make sure that movies db is not modified
-            RestsTestBase.GetWebResponse(HttpMethods.Post, ServiceClientBaseUri + "reset-movies", ContentType.Xml, 0);
+            RestsTestBase.GetWebResponse(HttpMethods.Post, ServiceClientBaseUri + "reset-movies", MimeTypes.Xml, 0);
         }
 
 		[Test]
@@ -35,7 +34,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		{
 			var asyncClient = new AsyncServiceClient
 			{
-				ContentType = ContentType.Csv,
+                ContentType = MimeTypes.Csv,
 				StreamSerializer = (r, o, s) => CsvSerializer.SerializeToStream(o, s),
 				StreamDeserializer = CsvSerializer.DeserializeFromStream,
 			};
@@ -50,15 +49,15 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		}
 
 		[Test]
-		public void Can_download_CSV_movies_using_csv_syncreply_endpoint()
+		public void Can_download_CSV_movies_using_csv_reply_endpoint()
 		{
-			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "csv/syncreply/Movies");
+			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "csv/reply/Movies");
 
 			var res = req.GetResponse();
-			Assert.That(res.ContentType, Is.EqualTo(ContentType.Csv));
+            Assert.That(res.ContentType, Is.EqualTo(MimeTypes.Csv));
 			Assert.That(res.Headers[HttpHeaders.ContentDisposition], Is.EqualTo("attachment;filename=Movies.csv"));
 
-			var csvRows = new StreamReader(res.GetResponseStream()).ReadLines().ToList();
+            var csvRows = res.ReadLines().ToList();
 
 			const int headerRowCount = 1;
 			Assert.That(csvRows, Has.Count.EqualTo(headerRowCount + ResetMoviesService.Top5Movies.Count));
@@ -66,16 +65,16 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		}
 
 		[Test]
-		public void Can_download_CSV_movies_using_csv_SyncReply_Path_and_alternate_XML_Accept_Header()
+		public void Can_download_CSV_movies_using_csv_reply_Path_and_alternate_XML_Accept_Header()
 		{
-			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "csv/syncreply/Movies");
+			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "csv/reply/Movies");
 			req.Accept = "application/xml";
 
 			var res = req.GetResponse();
-			Assert.That(res.ContentType, Is.EqualTo(ContentType.Csv));
+            Assert.That(res.ContentType, Is.EqualTo(MimeTypes.Csv));
 			Assert.That(res.Headers[HttpHeaders.ContentDisposition], Is.EqualTo("attachment;filename=Movies.csv"));
 
-			var csvRows = new StreamReader(res.GetResponseStream()).ReadLines().ToList();
+            var csvRows = res.ReadLines().ToList();
 
 			Assert.That(csvRows, Has.Count.EqualTo(HeaderRowCount + ResetMoviesService.Top5Movies.Count));
 			Console.WriteLine(csvRows.Join("\n"));
@@ -85,28 +84,28 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		public void Can_download_CSV_movies_using_csv_Accept_and_RestPath()
 		{
 			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "movies");
-			req.Accept = ContentType.Csv;
+            req.Accept = MimeTypes.Csv;
 
 			var res = req.GetResponse();
-			Assert.That(res.ContentType, Is.EqualTo(ContentType.Csv));
+            Assert.That(res.ContentType, Is.EqualTo(MimeTypes.Csv));
 			Assert.That(res.Headers[HttpHeaders.ContentDisposition], Is.EqualTo("attachment;filename=Movies.csv"));
 
-			var csvRows = new StreamReader(res.GetResponseStream()).ReadLines().ToList();
+            var csvRows = res.ReadLines().ToList();
 
 			Assert.That(csvRows, Has.Count.EqualTo(HeaderRowCount + ResetMoviesService.Top5Movies.Count));
 			//Console.WriteLine(csvRows.Join("\n"));
 		}
 
 		[Test]
-		public void Can_download_CSV_Hello_using_csv_syncreply_endpoint()
+		public void Can_download_CSV_Hello_using_csv_reply_endpoint()
 		{
-			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "csv/syncreply/Hello?Name=World!");
+			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "csv/reply/Hello?Name=World!");
 
 			var res = req.GetResponse();
-			Assert.That(res.ContentType, Is.EqualTo(ContentType.Csv));
+            Assert.That(res.ContentType, Is.EqualTo(MimeTypes.Csv));
 			Assert.That(res.Headers[HttpHeaders.ContentDisposition], Is.EqualTo("attachment;filename=Hello.csv"));
 
-			var csv = new StreamReader(res.GetResponseStream()).ReadToEnd();
+            var csv = res.ReadToEnd();
 			Assert.That(csv, Is.EqualTo("Result\r\n\"Hello, World!\"\r\n"));
 
 			Console.WriteLine(csv);
@@ -116,14 +115,14 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		public void Can_download_CSV_Hello_using_csv_Accept_and_RestPath()
 		{
 			var req = (HttpWebRequest)WebRequest.Create(ServiceClientBaseUri + "hello/World!");
-			req.Accept = ContentType.Csv;
+            req.Accept = MimeTypes.Csv;
 
 			var res = req.GetResponse();
-			Assert.That(res.ContentType, Is.EqualTo(ContentType.Csv));
+            Assert.That(res.ContentType, Is.EqualTo(MimeTypes.Csv));
 			Assert.That(res.Headers[HttpHeaders.ContentDisposition], Is.EqualTo("attachment;filename=Hello.csv"));
 
-			var csv = new StreamReader(res.GetResponseStream()).ReadToEnd();
-			Assert.That(csv, Is.EqualTo("Result\r\n\"Hello, World!\"\r\n"));
+            var csv = res.ReadToEnd();
+            Assert.That(csv, Is.EqualTo("Result\r\n\"Hello, World!\"\r\n"));
 
 			Console.WriteLine(csv);
 		}

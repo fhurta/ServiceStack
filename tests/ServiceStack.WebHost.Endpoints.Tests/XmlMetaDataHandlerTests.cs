@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using ServiceStack.WebHost.Endpoints.Metadata;
+using ServiceStack.Metadata;
 using System.Runtime.Serialization;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
@@ -14,7 +14,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             var response = handler.CreateResponse(typeof(NoDefaultConstructor));
             Assert.That(response, Is.Not.Empty);
         }
-
     }
 
     [DataContract(Namespace = "http://schemas.servicestack.net/types")]

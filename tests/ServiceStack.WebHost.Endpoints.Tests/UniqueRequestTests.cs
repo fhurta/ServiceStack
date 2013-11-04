@@ -3,7 +3,6 @@ using Funq;
 using NUnit.Framework;
 using ServiceStack.Common;
 using ServiceStack.MiniProfiler.UI;
-using ServiceStack.ServiceHost;
 using ServiceStack.Text;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
@@ -46,7 +45,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]

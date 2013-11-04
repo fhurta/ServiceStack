@@ -5,23 +5,20 @@
 // Authors:
 //   Demis Bellot (demis.bellot@gmail.com)
 //
-// Copyright 2013 ServiceStack.
+// Copyright 2013 Service Stack LLC. All Rights Reserved.
 //
-// Licensed under the same terms of Redis and ServiceStack: new BSD license.
+// Licensed under the same terms of ServiceStack.
 //
 
 using System;
 using System.Collections.Generic;
-using ServiceStack.DataAccess;
-using ServiceStack.DesignPatterns.Model;
-#if WINDOWS_PHONE
-using ServiceStack.Text.WP;
-#endif
+using ServiceStack.Data;
+using ServiceStack.Model;
 
 namespace ServiceStack.Redis.Generic
 {
 	public interface IRedisTypedClient<T>
-		: IBasicPersistenceProvider<T>
+		: IEntityStore<T>
 	{
 		IHasNamed<IRedisList<T>> Lists { get; set; }
 		IHasNamed<IRedisSet<T>> Sets { get; set; }

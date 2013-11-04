@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 {
@@ -16,7 +13,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 		public void OnBeforeEachTest()
 		{
 			var jsonClient = new JsonServiceClient(BaseUrl);
-			jsonClient.Post<ResetMoviesResponse>("reset-movies", new ResetMovies());
+            jsonClient.Post<ResetMoviesResponse>("reset-movies", new ResetMovies());
 		}
 
 		[Test]

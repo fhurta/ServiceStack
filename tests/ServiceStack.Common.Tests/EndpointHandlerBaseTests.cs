@@ -1,9 +1,8 @@
 ﻿using System;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.Testing;
-using ServiceStack.WebHost.Endpoints.Extensions;
+using ServiceStack.Testing;
+using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.Common.Tests
 {
@@ -12,7 +11,8 @@ namespace ServiceStack.Common.Tests
     {
         public IHttpRequest CreateRequest(string userHostAddress)
         {
-            var httpReq = new MockHttpRequest("test", HttpMethods.Get, ContentType.Json, "/", null, null, null) {
+            var httpReq = new MockHttpRequest("test", HttpMethods.Get, MimeTypes.Json, "/", null, null, null)
+            {
                 UserHostAddress = userHostAddress
             };
             return httpReq;
@@ -21,11 +21,14 @@ namespace ServiceStack.Common.Tests
         [Test]
         public void Can_parse_Ips()
         {
-            var result = CreateRequest("204.2.145.235").GetAttributes();
+            using (new BasicAppHost().Init())
+            {
+                var result = CreateRequest("204.2.145.235").GetAttributes();
 
-            Assert.That(result.Has(EndpointAttributes.External));
-            Assert.That(result.Has(EndpointAttributes.HttpGet));
-            Assert.That(result.Has(EndpointAttributes.InSecure));
+                Assert.That(result.Has(RequestAttributes.External));
+                Assert.That(result.Has(RequestAttributes.HttpGet));
+                Assert.That(result.Has(RequestAttributes.InSecure));
+            }
         }
 
         [Flags]

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NUnit.Framework;
 using ServiceStack.Razor;
 using ServiceStack.ServiceHost.Tests.Formats;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Testing;
 using ServiceStack.Text;
 using ServiceStack.VirtualPath;
 
@@ -29,9 +28,12 @@ namespace ServiceStack.ServiceHost.Tests.Formats_Razor
 		private List<Product> products;
 		object productArgs;
 
+	    private ServiceStackHost appHost;
+
 		[TestFixtureSetUp]
 		public void TestFixtureSetUp()
 		{
+            appHost = new BasicAppHost().Init();
 			this.products = new List<Product> {
 				new Product("Pen", 1.99m),
 				new Product("Glass", 9.99m),
@@ -40,6 +42,12 @@ namespace ServiceStack.ServiceHost.Tests.Formats_Razor
 			};
 			productArgs = new { products = products };
 		}
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
         
         [SetUp]
         public void SetUp()

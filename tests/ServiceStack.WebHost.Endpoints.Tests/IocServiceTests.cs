@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.Text;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Services;
@@ -33,7 +31,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			if (appHost != null)
 			{
 				appHost.Dispose();
-				appHost = null;
 			}
 		}
 

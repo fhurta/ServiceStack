@@ -2,10 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.ServiceModel;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 {
@@ -20,7 +16,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 			var errorList = restClient.Get<ErrorCollectionResponse>("error");
 			Assert.That(errorList.Result.Count, Is.EqualTo(1));
 
-			var error = restClient.Post<ErrorResponse>("error", new Error { Id = "Test" });
+            var error = restClient.Post<ErrorResponse>("error", new Error { Id = "Test" });
 			Assert.That(error, !Is.Null);
 		}
 
@@ -48,9 +44,9 @@ namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 		public Error Inner { get; set; }
 	}
 
-	public class ErrorService : RestServiceBase<Error>
+	public class ErrorService : Service
 	{
-		public override object OnGet(Error request)
+		public object Get(Error request)
 		{
 			if (request != null && !String.IsNullOrEmpty(request.Id))
 				return new ErrorResponse(new Error { Id = "Test" });
@@ -58,7 +54,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 			return new ErrorCollectionResponse(new List<Error> { new Error { Id = "TestCollection" } });
 		}
 
-		public override object OnPost(Error request)
+		public object Post(Error request)
 		{
 			return new ErrorResponse(request);
 		}

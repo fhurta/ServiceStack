@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Runtime.Serialization;
-using ServiceStack.Common.Extensions;
-using ServiceStack.Common.Web;
 using ServiceStack.DataAnnotations;
 using ServiceStack.OrmLite;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
 using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -84,38 +81,32 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public Movie Movie { get; set; }
 	}
 
-
-	public class MovieService : RestServiceBase<Movie>
+	public class MovieService : Service
 	{
-		public IDbConnectionFactory DbFactory { get; set; }
-
 		/// <summary>
 		/// GET /movies/{Id} 
 		/// </summary>
-		public override object OnGet(Movie movie)
+		public object Get(Movie movie)
 		{
 			return new MovieResponse {
-				Movie = DbFactory.Run(db => db.GetById<Movie>(movie.Id))
+				Movie = Db.SingleById<Movie>(movie.Id)
 			};
 		}
 
 		/// <summary>
 		/// POST /movies
 		/// </summary>
-		public override object OnPost(Movie movie)
+		public object Post(Movie movie)
 		{
-			var newMovieId = DbFactory.Run(db => {
-				db.Insert(movie);
-				return db.GetLastInsertId();
-			});
+            Db.Save(movie);
 
 			var newMovie = new MovieResponse {
-				Movie = DbFactory.Run(db => db.GetById<Movie>(newMovieId))
+				Movie = Db.SingleById<Movie>(movie.Id)
 			};
 			return new HttpResult(newMovie) {
 				StatusCode = HttpStatusCode.Created,
 				Headers = {
-					{ HttpHeaders.Location, this.RequestContext.AbsoluteUri.WithTrailingSlash() + newMovieId }
+					{ HttpHeaders.Location, this.Request.AbsoluteUri.WithTrailingSlash() + movie.Id }
 				}
 			};
 		}
@@ -123,34 +114,32 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		/// <summary>
 		/// PUT /movies
 		/// </summary>
-		public override object OnPut(Movie movie)
+		public object Put(Movie movie)
 		{
-			DbFactory.Run(db => db.Update(movie));
+		    Db.Update(movie);
 			return new MovieResponse();
 		}
 
 		/// <summary>
 		/// DELETE /movies/{Id}
 		/// </summary>
-		public override object OnDelete(Movie request)
+		public object Delete(Movie request)
 		{
-			DbFactory.Run(db => db.DeleteById<Movie>(request.Id));
+			Db.DeleteById<Movie>(request.Id);
 			return new MovieResponse();
 		}
 
 		/// <summary>
 		/// PATCH /movies
 		/// </summary>
-		public override object OnPatch(Movie movie)
+		public object Patch(Movie movie)
 		{
-			DbFactory.Run(db => {
-				var existingMovie = db.GetById<Movie>(movie.Id);
-				if (movie.Title != null)
-					existingMovie.Title = movie.Title;
-				db.Save(existingMovie);
-			});
-			return new MovieResponse();
+            var existingMovie = Db.SingleById<Movie>(movie.Id);
+            if (movie.Title != null)
+                existingMovie.Title = movie.Title;
+            Db.Save(existingMovie);
+            
+            return new MovieResponse();
 		}
 	}
-
 }

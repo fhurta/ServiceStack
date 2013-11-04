@@ -4,9 +4,9 @@ using System.IO;
 using System.Net;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.Common.Extensions;
-using ServiceStack.Common.Web;
+using ServiceStack.Common;
 using ServiceStack.Text;
+using ServiceStack.Web;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Services;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
@@ -24,10 +24,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
 			public override void Configure(Container container)
 			{
-				EndpointHostConfig.Instance.GlobalResponseHeaders.Clear();
+                HostContext.Config.GlobalResponseHeaders.Clear();
 
 				//Signal advanced web browsers what HTTP Methods you accept
-				base.SetConfig(new EndpointHostConfig
+				base.SetConfig(new HostConfig
 				{
 					GlobalResponseHeaders =
 					{
@@ -36,7 +36,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 					},
 				});
 
-				this.RequestFilters.Add((req, res, dto) =>
+				this.GlobalRequestFilters.Add((req, res, dto) =>
 				{
 					var requestFilter = dto as RequestFilter;
 					if (requestFilter != null)
@@ -67,19 +67,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			appHost.Dispose();
 		}
 
-		static string GetReceivedHeaderValue(string headerName)
-		{
-			var webRequest = (HttpWebRequest)WebRequest.Create(
-				ListeningOn + "json/syncreply/Headers?Name=" + headerName.UrlEncode());
-
-			var json = new StreamReader(webRequest.GetResponse().GetResponseStream()).ReadToEnd();
-			Console.WriteLine(json);
-
-			var response = JsonSerializer.DeserializeFromString<HeadersResponse>(json);
-
-			return response.Value;
-		}
-
 		public static Dictionary<string, string> GetResponseHeaders(String url)
 		{
 			var webRequest = (HttpWebRequest)WebRequest.Create(url);
@@ -100,7 +87,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public void Can_resolve_CustomHeader()
 		{
 			var webRequest = (HttpWebRequest)WebRequest.Create(
-				ListeningOn + "json/syncreply/Headers?Name=X-CustomHeader");
+				ListeningOn + "json/reply/Headers?Name=X-CustomHeader");
 			webRequest.Headers["X-CustomHeader"] = "CustomValue";
 
 			var response = JsonSerializer.DeserializeFromStream<HeadersResponse>(
@@ -112,7 +99,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void Does_Send_Global_Headers()
 		{
-            var headers = GetResponseHeaders(ListeningOn + "json/syncreply/Headers");
+            var headers = GetResponseHeaders(ListeningOn + "json/reply/Headers");
 			Assert.That(headers["Access-Control-Allow-Origin"], Is.EqualTo("*"));
 			Assert.That(headers["Access-Control-Allow-Methods"], Is.EqualTo("GET, POST, PUT, DELETE, OPTIONS"));
 		}
@@ -123,7 +110,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			try
 			{
 				var webRequest = (HttpWebRequest)WebRequest.Create(
-					ListeningOn + "json/syncreply/RequestFilter?StatusCode=401");
+					ListeningOn + "json/reply/RequestFilter?StatusCode=401");
 
 				webRequest.GetResponse();
 
@@ -142,7 +129,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			try
 			{
 				var webRequest = (HttpWebRequest)WebRequest.Create(ListeningOn 
-					+ "json/syncreply/RequestFilter?StatusCode=401"
+					+ "json/reply/RequestFilter?StatusCode=401"
 					+ "&HeaderName=" + HttpHeaders.WwwAuthenticate
 					+ "&HeaderValue=" + "Basic realm=\"Auth Required\"".UrlEncode());
 

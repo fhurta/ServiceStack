@@ -1,6 +1,5 @@
 ﻿using System.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack.Host.Handlers;
 
 namespace ServiceStack
 {
@@ -24,53 +23,53 @@ namespace ServiceStack
             if (pathParts.Length == 1)
             {
                 if (pathController == "soap11")
-                    return new Soap11MessageSyncReplyHttpHandler();
+                    return new Soap11MessageReplyHttpHandler();
                 if (pathController == "soap12")
-                    return new Soap12MessageSyncReplyHttpHandler();
+                    return new Soap12MessageReplyHttpHandler();
 
                 return null;
             }
 
             var pathAction = string.Intern(pathParts[1].ToLower());
             var requestName = pathParts.Length > 2 ? pathParts[2] : null;
-            var isReply = pathAction == "syncreply" || pathAction == "reply";
-            var isOneWay = pathAction == "asynconeway" || pathAction == "oneway";
+            var isReply = pathAction == "reply";
+            var isOneWay = pathAction == "oneway";
             switch (pathController)
             {
                 case "json":
                     if (isReply)
-                        return new JsonSyncReplyHandler { RequestName = requestName };
+                        return new JsonReplyHandler { RequestName = requestName };
                     if (isOneWay)
-                        return new JsonAsyncOneWayHandler { RequestName = requestName };
+                        return new JsonOneWayHandler { RequestName = requestName };
                     break;
 
                 case "xml":
                     if (isReply)
-                        return new XmlSyncReplyHandler { RequestName = requestName };
+                        return new XmlReplyHandler { RequestName = requestName };
                     if (isOneWay)
-                        return new XmlAsyncOneWayHandler { RequestName = requestName };
+                        return new XmlOneWayHandler { RequestName = requestName };
                     break;
 
                 case "jsv":
                     if (isReply)
-                        return new JsvSyncReplyHandler { RequestName = requestName };
+                        return new JsvReplyHandler { RequestName = requestName };
                     if (isOneWay)
-                        return new JsvAsyncOneWayHandler { RequestName = requestName };
+                        return new JsvOneWayHandler { RequestName = requestName };
                     break;
 
                 default:
                     string contentType;
-                    if (EndpointHost.ContentTypeFilter.ContentTypeFormats.TryGetValue(pathController, out contentType))
+                    if (HostContext.ContentTypes.ContentTypeFormats.TryGetValue(pathController, out contentType))
                     {
-                        var feature = Common.Web.ContentType.ToFeature(contentType);
+                        var feature = ContentFormat.ToFeature(contentType);
                         if (feature == Feature.None) feature = Feature.CustomFormat;
 
                         if (isReply)
-                            return new GenericHandler(contentType, EndpointAttributes.Reply, feature) {
+                            return new GenericHandler(contentType, RequestAttributes.Reply, feature) {
                                 RequestName = requestName
                             };
                         if (isOneWay)
-                            return new GenericHandler(contentType, EndpointAttributes.OneWay, feature) {
+                            return new GenericHandler(contentType, RequestAttributes.OneWay, feature) {
                                 RequestName = requestName
                             };
                     }

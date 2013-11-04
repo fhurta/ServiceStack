@@ -2,18 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.Service;
 using ServiceStack.Api.Swagger;
-using ServiceStack.ServiceInterface.Cors;
 using ServiceStack.Text;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
-    [ServiceHost.Api("Service Description")]
+    [Api("Service Description")]
     [Route("/swagger/{Name}", "GET", Summary = @"GET Summary", Notes = "GET Notes")]
     [Route("/swagger/{Name}", "POST", Summary = @"POST Summary", Notes = "POST Notes")]
     public class SwaggerFeatureRequest
@@ -23,21 +20,21 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public string Name { get; set; }
     }
 
-    [ServiceHost.Api]
+    [Api]
     [Route("/swaggerGetList/{Name}", "GET")]
     public class SwaggerGetListRequest : IReturn<List<SwaggerFeatureResponse>>
     {
         public string Name { get; set; }
     }
 
-    [ServiceHost.Api]
+    [Api]
     [Route("/swaggerGetArray/{Name}", "GET")]
     public class SwaggerGetArrayRequest : IReturn<SwaggerFeatureResponse[]>
     {
         public string Name { get; set; }
     }
     
-    [ServiceHost.Api]
+    [Api]
     [Route("/swaggerModels/{UrlParam}", "POST")]
     public class SwaggerModelsRequest : IReturn<SwaggerFeatureResponse>
     {
@@ -57,8 +54,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
         public SwaggerNestedModel3[] ArrayProperty { get; set; }
 
+        [System.ComponentModel.Description("Byte description")]
         public byte ByteProperty { get; set; }
 
+        [ServiceStack.DataAnnotations.Description("Long description")]
         public long LongProperty { get; set; }
 
         public float FloatProperty { get; set; }
@@ -88,7 +87,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public bool NestedProperty3 { get; set;}
     }
 
-    [ServiceHost.Api]
+    [Api]
     [Route("/swagger2/NameIsNotSetRequest", "GET")]
     public class NameIsNotSetRequest
     {
@@ -97,7 +96,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
     }
 
 
-    [ServiceHost.Api("test")]
+    [Api("test")]
     [Route("/swg3/conference/count", "GET")]
     public class MultipleTestRequest : IReturn<int>
     {
@@ -105,7 +104,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public string Name { get; set; }
     }
 
-    [ServiceHost.Api]
+    [Api]
     [Route("/swg3/conference/{Name}/conferences", "POST")]
     [Route("/swgb3/conference/{Name}/conferences", "POST")]
     public class MultipleTest2Request : IReturn<object>
@@ -114,7 +113,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public string Name { get; set; }
     }
 
-    [ServiceHost.Api]
+    [Api]
     [Route("/swg3/conference/{Name}/conferences", "DELETE")]
     public class MultipleTest3Request : IReturn<object>
     {
@@ -122,7 +121,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public string Name { get; set; }
     }
 
-    [ServiceHost.Api]
+    [Api]
     [Route("/swg3/conference", "GET")]
     public class MultipleTest4Request : IReturn<object>
     {
@@ -138,7 +137,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public int? Optional { get; set; }
 	}
 
-	[ServiceHost.Api]
+	[Api]
 	[Route("/swgnull/", "GET")]
 	public class NullableInRequest : IReturn<NullableResponse>
 	{
@@ -146,7 +145,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public int? Position { get; set; }
 	}
 	
-	public class NullableService : ServiceInterface.Service
+	public class NullableService : Service
 	{
 		public object Get(NullableInRequest request)
 		{
@@ -160,7 +159,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public bool IsSuccess { get; set; }
     }
 
-    public class MultipleTestRequestService : ServiceInterface.Service
+    public class MultipleTestRequestService : Service
     {
         public object Get(MultipleTestRequest request)
         {
@@ -177,7 +176,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             return null;
         }
     }
-    public class MultipleTest2RequestService : ServiceInterface.Service
+    public class MultipleTest2RequestService : Service
     {
         public object Get(MultipleTest4Request request)
         {
@@ -186,7 +185,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
     }
 
 
-    public class SwaggerFeatureService : ServiceInterface.Service
+    public class SwaggerFeatureService : Service
     {
         public object Get(SwaggerFeatureRequest request)
         {
@@ -219,7 +218,65 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
     }
 
+    [DataContract]
+    public class DataContractBaseType
+    {
+        [DataMember]
+        public string Zebra { get; set; }
+    }
 
+    [Api]
+    [DataContract]
+    [Route("/swgdatamemberorder", "GET")]
+    public class DataContractDerivedTypeRequest : DataContractBaseType, IReturn<DataContractDerivedTypeResponse>
+    {
+        [DataMember(Order = 0)]
+        public string Bird { get; set; }
+        [DataMember(Order = 1)]
+        public string Parrot { get; set; }
+        [DataMember]
+        public string Dog { get; set; }
+        [DataMember(Order = 3)]
+        public string Antelope { get; set; }
+        [DataMember]
+        public string Cat { get; set; }
+        [DataMember(Order = 1)]
+        public string Albatross { get; set; }
+    }
+
+    [DataContract]
+    public class DataContractHierarchyType : DataContractBaseType
+    {
+        [DataMember]
+        public string Falcon { get; set; }
+    }
+
+    [DataContract]
+    public class DataContractDerivedTypeResponse : DataContractHierarchyType
+    {
+        [DataMember(Order = 0)]
+        public string Bird { get; set; }
+        [DataMember(Order = 1)]
+        public string Parrot { get; set; }
+        [DataMember]
+        public string Cat { get; set; }
+        [DataMember]
+        public string Dog { get; set; }
+        [DataMember(Order = 3)]
+        public string Antelope { get; set; }
+        [DataMember(Order = 1)]
+        public string Albatross { get; set; }
+        [DataMember(Order = 0, Name = "Baldeagle")]
+        public string Eagle { get; set; }
+    }
+
+    public class DataMemberAttributeOrderService : Service
+    {
+        public object Get(DataContractDerivedTypeRequest request)
+        {
+            return new DataContractDerivedTypeResponse();
+        }
+    }
     
     [TestFixture]
     public class SwaggerFeatureServiceTests
@@ -230,7 +287,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public class SwaggerFeatureAppHostHttpListener
             : AppHostHttpListenerBase
         {
-
             public SwaggerFeatureAppHostHttpListener()
                 : base("Swagger Feature Tests", typeof(SwaggerFeatureServiceTests).Assembly) { }
 
@@ -238,7 +294,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             {
                 Plugins.Add(new SwaggerFeature());
 
-                SetConfig(new EndpointHostConfig
+                SetConfig(new HostConfig
                 {
                     DebugMode = true //Show StackTraces for easier debugging
                 });
@@ -248,7 +304,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         SwaggerFeatureAppHostHttpListener appHost;
 
         [TestFixtureSetUp]
-        public void OnTestFixtureSetUp()
+        public void TestFixtureSetUp()
         {
             appHost = new SwaggerFeatureAppHostHttpListener();
             appHost.Init();
@@ -256,7 +312,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [TestFixtureTearDown]
-        public void OnTestFixtureTearDown()
+        public void TestFixtureTearDown()
         {
             appHost.Dispose();
         }
@@ -494,14 +550,16 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             Assert.That(requestClassModel.Properties.ContainsKey("Name"), Is.True);
             Assert.That(requestClassModel.Properties["Name"].Type, Is.EqualTo(SwaggerType.String));
-            Assert.That(requestClassModel.Properties["Name"].Description, Is.EqualTo("Name description"));
+            Assert.That(requestClassModel.Properties["Name"].Description, Is.EqualTo("The request body"));
 
             Assert.That(requestClassModel.Properties.ContainsKey("ByteProperty"));
             Assert.That(requestClassModel.Properties["ByteProperty"].Type, Is.EqualTo(SwaggerType.Byte));
+            Assert.That(requestClassModel.Properties["ByteProperty"].Description, Is.EqualTo("Byte description"));
             Assert.That(resource.Models.ContainsKey(typeof(byte).Name), Is.False);
 
             Assert.That(requestClassModel.Properties.ContainsKey("LongProperty"));
             Assert.That(requestClassModel.Properties["LongProperty"].Type, Is.EqualTo(SwaggerType.Long));
+            Assert.That(requestClassModel.Properties["LongProperty"].Description, Is.EqualTo("Long description"));
             Assert.That(resource.Models.ContainsKey(typeof(long).Name), Is.False);
 
             Assert.That(requestClassModel.Properties.ContainsKey("FloatProperty"));
@@ -576,5 +634,36 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			Assert.That(responseModel.Properties["Optional"].Type, Is.EqualTo(SwaggerType.Int));
 			Assert.That(responseModel.Properties["NestedProperty2"].Required, Is.True);
 		}
+
+        // Ordering defined by: http://msdn.microsoft.com/en-us/library/ms729813.aspx
+        [Test, TestCaseSource("RestClients")]
+        public void Should_order_fields_with_DataMemberAttribute(IRestClient client)
+        {
+            var resource = client.Get<ResourceResponse>("/resource/swgdatamemberorder");
+
+            Assert.That(resource.Models.ContainsKey(typeof(DataContractDerivedTypeRequest).Name), Is.True);
+            var requestClassModel = resource.Models[typeof(DataContractDerivedTypeRequest).Name];
+
+            Assert.That(requestClassModel.Properties.ElementAt(0).Key, Is.EqualTo("Zebra"));
+            Assert.That(requestClassModel.Properties.ElementAt(1).Key, Is.EqualTo("Cat"));
+            Assert.That(requestClassModel.Properties.ElementAt(2).Key, Is.EqualTo("Dog"));
+            Assert.That(requestClassModel.Properties.ElementAt(3).Key, Is.EqualTo("Bird"));
+            Assert.That(requestClassModel.Properties.ElementAt(4).Key, Is.EqualTo("Albatross"));
+            Assert.That(requestClassModel.Properties.ElementAt(5).Key, Is.EqualTo("Parrot"));
+            Assert.That(requestClassModel.Properties.ElementAt(6).Key, Is.EqualTo("Antelope"));
+
+            Assert.That(resource.Models.ContainsKey(typeof(DataContractDerivedTypeResponse).Name), Is.True);
+            var responseClassModel = resource.Models[typeof(DataContractDerivedTypeResponse).Name];
+
+            Assert.That(responseClassModel.Properties.ElementAt(0).Key, Is.EqualTo("Zebra"));
+            Assert.That(responseClassModel.Properties.ElementAt(1).Key, Is.EqualTo("Falcon"));
+            Assert.That(responseClassModel.Properties.ElementAt(2).Key, Is.EqualTo("Cat"));
+            Assert.That(responseClassModel.Properties.ElementAt(3).Key, Is.EqualTo("Dog"));
+            Assert.That(responseClassModel.Properties.ElementAt(4).Key, Is.EqualTo("Baldeagle"));
+            Assert.That(responseClassModel.Properties.ElementAt(5).Key, Is.EqualTo("Bird"));
+            Assert.That(responseClassModel.Properties.ElementAt(6).Key, Is.EqualTo("Albatross"));
+            Assert.That(responseClassModel.Properties.ElementAt(7).Key, Is.EqualTo("Parrot"));
+            Assert.That(responseClassModel.Properties.ElementAt(8).Key, Is.EqualTo("Antelope"));
+        }
     }
 }

@@ -1,7 +1,5 @@
 ﻿using Funq;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -10,7 +8,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public int Id { get; set; }
     }
 
-    public class BaseService<T> : ServiceInterface.Service
+    public class BaseService<T> : Service
     {
         public virtual object Get(T dto)
         {
@@ -52,7 +50,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]

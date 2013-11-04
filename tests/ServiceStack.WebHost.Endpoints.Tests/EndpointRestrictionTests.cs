@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
-using ServiceStack.Common.Extensions;
-using ServiceStack.ServiceHost;
+using ServiceStack.Text;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Services;
 
@@ -13,56 +12,64 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 	public class EndpointRestrictionTests
 		: ServiceHostTestBase
 	{
-
 		//Localhost and LocalSubnet is always included with the Internal flag
 		private const int EndpointAttributeCount = 17;
-		private static readonly List<EndpointAttributes> AllAttributes = (EndpointAttributeCount).Times().ConvertAll<EndpointAttributes>(x => (EndpointAttributes)(1 << (int)x));
+        private static readonly List<RequestAttributes> AllAttributes = (EndpointAttributeCount).Times().Map<RequestAttributes>(x => (RequestAttributes)(1 << (int)x));
 
-		TestAppHost appHost;
+		ServiceStackHost appHost;
 
-		[TestFixtureSetUp]
-		public void TestFixtureSetUp()
+        [TestFixtureSetUp]
+        public void TestFixtureSetUp()
+        {
+            appHost = new TestAppHost().Init();
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
+
+		public void ShouldAllowAccessWhen<TRequestDto>(RequestAttributes withScenario)
 		{
-			appHost = CreateAppHost();
+            ShouldNotThrow<UnauthorizedAccessException>(() => appHost.ExecuteService(typeof(TRequestDto).New(), withScenario));
 		}
 
-		public void ShouldAllowAccessWhen<TRequestDto>(EndpointAttributes withScenario)
-			where TRequestDto : new()
+		public void ShouldDenyAccessWhen<TRequestDto>(RequestAttributes withScenario)
 		{
-			ShouldNotThrow<UnauthorizedAccessException>(() => appHost.ExecuteService(new TRequestDto(), withScenario));
+            ShouldThrow<UnauthorizedAccessException>(() => appHost.ExecuteService(typeof(TRequestDto).New(), withScenario));
 		}
 
-		public void ShouldDenyAccessWhen<TRequestDto>(EndpointAttributes withScenario)
-			where TRequestDto : new()
-		{
-			ShouldThrow<UnauthorizedAccessException>(() => appHost.ExecuteService(new TRequestDto(), withScenario));
-		}
-
-		public void ShouldDenyAccessForAllOtherScenarios<TRequestDto>(params EndpointAttributes[] notIncluding)
-			where TRequestDto : new()
+		public void ShouldDenyAccessForAllOtherScenarios<TRequestDto>(params RequestAttributes[] notIncluding)
 		{
 			ShouldDenyAccessForOtherScenarios<TRequestDto>(AllAttributes.Where(x => !notIncluding.Contains(x)).ToList());
 		}
 
-		public void ShouldDenyAccessForOtherNetworkAccessScenarios<TRequestDto>(params EndpointAttributes[] notIncluding)
-			where TRequestDto : new()
+		public void ShouldDenyAccessForOtherNetworkAccessScenarios<TRequestDto>(params RequestAttributes[] notIncluding)
 		{
-			var scenarios = new List<EndpointAttributes> { EndpointAttributes.Localhost, EndpointAttributes.LocalSubnet, EndpointAttributes.External };
+			var scenarios = new List<RequestAttributes> { RequestAttributes.Localhost, RequestAttributes.LocalSubnet, RequestAttributes.External };
 			ShouldDenyAccessForOtherScenarios<TRequestDto>(scenarios.Where(x => !notIncluding.Contains(x)).ToList());
 		}
 
-		public void ShouldDenyAccessForOtherHttpRequestTypesScenarios<TRequestDto>(params EndpointAttributes[] notIncluding)
-			where TRequestDto : new()
+		public void ShouldDenyAccessForOtherHttpRequestTypesScenarios<TRequestDto>(params RequestAttributes[] notIncluding)
 		{
-			var scenarios = new List<EndpointAttributes> { EndpointAttributes.HttpHead, EndpointAttributes.HttpGet, 
-				EndpointAttributes.HttpPost, EndpointAttributes.HttpPut, EndpointAttributes.HttpDelete };
+		    var scenarios = new List<RequestAttributes>
+		    {
+		        RequestAttributes.HttpHead,
+		        RequestAttributes.HttpGet,
+		        RequestAttributes.HttpPost,
+		        RequestAttributes.HttpPut,
+		        RequestAttributes.HttpDelete,
+		        RequestAttributes.HttpPatch,
+		        RequestAttributes.HttpOptions,
+		        RequestAttributes.HttpOther
+		    };
 			ShouldDenyAccessForOtherScenarios<TRequestDto>(scenarios.Where(x => !notIncluding.Contains(x)).ToList());
 		}
 
-		private void ShouldDenyAccessForOtherScenarios<TRequestDto>(IEnumerable<EndpointAttributes> otherScenarios)
-			where TRequestDto : new()
+		private void ShouldDenyAccessForOtherScenarios<TRequestDto>(IEnumerable<RequestAttributes> otherScenarios)
 		{
-			var requestDto = new TRequestDto();
+            var requestDto = typeof(TRequestDto).New();
 			foreach (var otherScenario in otherScenarios)
 			{
 				try
@@ -80,122 +87,122 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void InternalRestriction_allows_calls_from_Localhost_or_LocalSubnet()
 		{
-			ShouldAllowAccessWhen<InternalRestriction>(EndpointAttributes.Localhost);
-			ShouldAllowAccessWhen<InternalRestriction>(EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessForOtherNetworkAccessScenarios<InternalRestriction>(EndpointAttributes.Localhost, EndpointAttributes.LocalSubnet);
+			ShouldAllowAccessWhen<InternalRestriction>(RequestAttributes.Localhost);
+			ShouldAllowAccessWhen<InternalRestriction>(RequestAttributes.LocalSubnet);
+			ShouldDenyAccessForOtherNetworkAccessScenarios<InternalRestriction>(RequestAttributes.Localhost, RequestAttributes.LocalSubnet);
 		}
 
 		[Test]
 		public void LocalhostRestriction_allows_calls_from_localhost()
 		{
-			ShouldAllowAccessWhen<LocalhostRestriction>(EndpointAttributes.Localhost);
-			ShouldDenyAccessForOtherNetworkAccessScenarios<LocalhostRestriction>(EndpointAttributes.Localhost);
+			ShouldAllowAccessWhen<LocalhostRestriction>(RequestAttributes.Localhost);
+			ShouldDenyAccessForOtherNetworkAccessScenarios<LocalhostRestriction>(RequestAttributes.Localhost);
 		}
 
 		[Test]
 		public void LocalSubnetRestriction_allows_calls_from_LocalSubnet()
 		{
-			ShouldAllowAccessWhen<LocalSubnetRestriction>(EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessForOtherNetworkAccessScenarios<LocalSubnetRestriction>(EndpointAttributes.LocalSubnet);
+			ShouldAllowAccessWhen<LocalSubnetRestriction>(RequestAttributes.LocalSubnet);
+			ShouldDenyAccessForOtherNetworkAccessScenarios<LocalSubnetRestriction>(RequestAttributes.LocalSubnet);
 		}
 
 		[Test]
 		public void LocalSubnetRestriction_does_not_allow_calls_from_Localhost()
 		{
-			ShouldDenyAccessWhen<LocalSubnetRestriction>(EndpointAttributes.Localhost);
-			ShouldDenyAccessWhen<LocalSubnetRestriction>(EndpointAttributes.External);
+			ShouldDenyAccessWhen<LocalSubnetRestriction>(RequestAttributes.Localhost);
+			ShouldDenyAccessWhen<LocalSubnetRestriction>(RequestAttributes.External);
 		}
 
 		[Test]
 		public void InternalRestriction_allows_calls_from_Localhost_and_LocalSubnet()
 		{
-			ShouldAllowAccessWhen<InternalRestriction>(EndpointAttributes.Localhost);
-			ShouldAllowAccessWhen<InternalRestriction>(EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessWhen<LocalSubnetRestriction>(EndpointAttributes.External);
+			ShouldAllowAccessWhen<InternalRestriction>(RequestAttributes.Localhost);
+			ShouldAllowAccessWhen<InternalRestriction>(RequestAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<LocalSubnetRestriction>(RequestAttributes.External);
 		}
 
 		[Test]
 		public void SecureLocalSubnetRestriction_does_not_allow_partial_success()
 		{
-			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(EndpointAttributes.Localhost);
-			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(EndpointAttributes.InSecure | EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(EndpointAttributes.InSecure);
-			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(EndpointAttributes.Secure | EndpointAttributes.Localhost);
-			ShouldAllowAccessWhen<SecureLocalSubnetRestriction>(EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(RequestAttributes.Localhost);
+			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(RequestAttributes.InSecure | RequestAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(RequestAttributes.InSecure);
+			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(RequestAttributes.Secure | RequestAttributes.Localhost);
+			ShouldAllowAccessWhen<SecureLocalSubnetRestriction>(RequestAttributes.Secure | RequestAttributes.LocalSubnet);
 
-			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(EndpointAttributes.Secure | EndpointAttributes.InternalNetworkAccess);
-			ShouldDenyAccessForOtherNetworkAccessScenarios<SecureLocalSubnetRestriction>(EndpointAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<SecureLocalSubnetRestriction>(RequestAttributes.Secure | RequestAttributes.InternalNetworkAccess);
+			ShouldDenyAccessForOtherNetworkAccessScenarios<SecureLocalSubnetRestriction>(RequestAttributes.LocalSubnet);
 		}
 
 		[Test]
 		public void HttpPostXmlAndSecureLocalSubnetRestriction_does_not_allow_partial_success()
 		{
-			ShouldDenyAccessForOtherNetworkAccessScenarios<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessForOtherHttpRequestTypesScenarios<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost);
+			ShouldDenyAccessForOtherNetworkAccessScenarios<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.LocalSubnet);
+			ShouldDenyAccessForOtherHttpRequestTypesScenarios<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost);
 
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.Localhost);
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Json | EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml | EndpointAttributes.Secure | EndpointAttributes.Localhost);
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.Localhost);
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Json | RequestAttributes.Secure | RequestAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml | RequestAttributes.Secure | RequestAttributes.Localhost);
 
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.Secure | EndpointAttributes.HttpHead);
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml | EndpointAttributes.InSecure );
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.Secure | RequestAttributes.HttpHead);
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml | RequestAttributes.InSecure );
 
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Json | EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml | EndpointAttributes.Secure | EndpointAttributes.Localhost);
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Json | RequestAttributes.Secure | RequestAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml | RequestAttributes.Secure | RequestAttributes.Localhost);
 
-			ShouldAllowAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml | EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
+			ShouldAllowAccessWhen<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml | RequestAttributes.Secure | RequestAttributes.LocalSubnet);
 		}
 
 		[Test]
 		public void HttpPostXmlOrSecureLocalSubnetRestriction_does_allow_partial_success()
 		{
-			ShouldDenyAccessForOtherNetworkAccessScenarios<HttpPostXmlAndSecureLocalSubnetRestriction>(EndpointAttributes.LocalSubnet);
+			ShouldDenyAccessForOtherNetworkAccessScenarios<HttpPostXmlAndSecureLocalSubnetRestriction>(RequestAttributes.LocalSubnet);
 
-			ShouldDenyAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.Localhost | EndpointAttributes.HttpPut);
-			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
-			ShouldDenyAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Json | EndpointAttributes.Secure | EndpointAttributes.Localhost);
+			ShouldDenyAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.Localhost | RequestAttributes.HttpPut);
+			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Secure | RequestAttributes.LocalSubnet);
+			ShouldDenyAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Json | RequestAttributes.Secure | RequestAttributes.Localhost);
 
-			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
-			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml);
+			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.Secure | RequestAttributes.LocalSubnet);
+			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml);
 
-			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Json | EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
-			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml | EndpointAttributes.Secure | EndpointAttributes.Localhost);
+			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Json | RequestAttributes.Secure | RequestAttributes.LocalSubnet);
+			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml | RequestAttributes.Secure | RequestAttributes.Localhost);
 
-			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(EndpointAttributes.HttpPost | EndpointAttributes.Xml | EndpointAttributes.Secure | EndpointAttributes.LocalSubnet);
+			ShouldAllowAccessWhen<HttpPostXmlOrSecureLocalSubnetRestriction>(RequestAttributes.HttpPost | RequestAttributes.Xml | RequestAttributes.Secure | RequestAttributes.LocalSubnet);
 		}
 
 		[Test]
 		public void Can_access_from_insecure_dev_environment()
 		{
-			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(EndpointAttributes.Localhost | EndpointAttributes.InSecure | EndpointAttributes.HttpPost);
-			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.InSecure | EndpointAttributes.HttpPost);
-			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.InSecure | EndpointAttributes.HttpPost | EndpointAttributes.Reply);
-			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.InSecure | EndpointAttributes.HttpPost | EndpointAttributes.OneWay);
+			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(RequestAttributes.Localhost | RequestAttributes.InSecure | RequestAttributes.HttpPost);
+			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.InSecure | RequestAttributes.HttpPost);
+			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.InSecure | RequestAttributes.HttpPost | RequestAttributes.Reply);
+			ShouldAllowAccessWhen<InSecureDevEnvironmentRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.InSecure | RequestAttributes.HttpPost | RequestAttributes.OneWay);
 		}
 
 		[Test]
 		public void Can_access_from_secure_dev_environment()
 		{
-			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(EndpointAttributes.Localhost | EndpointAttributes.Secure | EndpointAttributes.HttpPost);
-			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.Secure | EndpointAttributes.HttpPost);
-			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.Secure | EndpointAttributes.HttpPost | EndpointAttributes.Reply);
-			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(EndpointAttributes.LocalSubnet | EndpointAttributes.Secure | EndpointAttributes.HttpPost | EndpointAttributes.OneWay);
+			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(RequestAttributes.Localhost | RequestAttributes.Secure | RequestAttributes.HttpPost);
+			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.Secure | RequestAttributes.HttpPost);
+			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.Secure | RequestAttributes.HttpPost | RequestAttributes.Reply);
+			ShouldAllowAccessWhen<SecureDevEnvironmentRestriction>(RequestAttributes.LocalSubnet | RequestAttributes.Secure | RequestAttributes.HttpPost | RequestAttributes.OneWay);
 		}
 
 		[Test]
 		public void Can_access_from_insecure_live_environment()
 		{
-			ShouldAllowAccessWhen<InSecureLiveEnvironmentRestriction>(EndpointAttributes.External | EndpointAttributes.InSecure | EndpointAttributes.HttpPost);
-			ShouldAllowAccessWhen<InSecureLiveEnvironmentRestriction>(EndpointAttributes.External | EndpointAttributes.InSecure | EndpointAttributes.HttpPost | EndpointAttributes.Reply);
-			ShouldAllowAccessWhen<InSecureLiveEnvironmentRestriction>(EndpointAttributes.External | EndpointAttributes.InSecure | EndpointAttributes.HttpPost | EndpointAttributes.OneWay);
+			ShouldAllowAccessWhen<InSecureLiveEnvironmentRestriction>(RequestAttributes.External | RequestAttributes.InSecure | RequestAttributes.HttpPost);
+			ShouldAllowAccessWhen<InSecureLiveEnvironmentRestriction>(RequestAttributes.External | RequestAttributes.InSecure | RequestAttributes.HttpPost | RequestAttributes.Reply);
+			ShouldAllowAccessWhen<InSecureLiveEnvironmentRestriction>(RequestAttributes.External | RequestAttributes.InSecure | RequestAttributes.HttpPost | RequestAttributes.OneWay);
 		}
 
 		[Test]
 		public void Can_access_from_secure_live_environment()
 		{
-			ShouldAllowAccessWhen<SecureLiveEnvironmentRestriction>(EndpointAttributes.External | EndpointAttributes.Secure | EndpointAttributes.HttpPost);
-			ShouldAllowAccessWhen<SecureLiveEnvironmentRestriction>(EndpointAttributes.External | EndpointAttributes.Secure | EndpointAttributes.HttpPost | EndpointAttributes.Reply);
-			ShouldAllowAccessWhen<SecureLiveEnvironmentRestriction>(EndpointAttributes.External | EndpointAttributes.Secure | EndpointAttributes.HttpPost | EndpointAttributes.OneWay);
+			ShouldAllowAccessWhen<SecureLiveEnvironmentRestriction>(RequestAttributes.External | RequestAttributes.Secure | RequestAttributes.HttpPost);
+			ShouldAllowAccessWhen<SecureLiveEnvironmentRestriction>(RequestAttributes.External | RequestAttributes.Secure | RequestAttributes.HttpPost | RequestAttributes.Reply);
+			ShouldAllowAccessWhen<SecureLiveEnvironmentRestriction>(RequestAttributes.External | RequestAttributes.Secure | RequestAttributes.HttpPost | RequestAttributes.OneWay);
 		}
 
 
@@ -203,18 +210,18 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void Print_enum_results()
 		{
-			PrintEnumResult(EndpointAttributes.InternalNetworkAccess, EndpointAttributes.Secure);
-			PrintEnumResult(EndpointAttributes.InternalNetworkAccess, EndpointAttributes.Secure | EndpointAttributes.External);
-			PrintEnumResult(EndpointAttributes.InternalNetworkAccess, EndpointAttributes.Secure | EndpointAttributes.Localhost);
-			PrintEnumResult(EndpointAttributes.InternalNetworkAccess, EndpointAttributes.Localhost);
+			PrintEnumResult(RequestAttributes.InternalNetworkAccess, RequestAttributes.Secure);
+			PrintEnumResult(RequestAttributes.InternalNetworkAccess, RequestAttributes.Secure | RequestAttributes.External);
+			PrintEnumResult(RequestAttributes.InternalNetworkAccess, RequestAttributes.Secure | RequestAttributes.Localhost);
+			PrintEnumResult(RequestAttributes.InternalNetworkAccess, RequestAttributes.Localhost);
 
-			PrintEnumResult(EndpointAttributes.Localhost, EndpointAttributes.Secure | EndpointAttributes.External);
-			PrintEnumResult(EndpointAttributes.Localhost, EndpointAttributes.Secure | EndpointAttributes.InternalNetworkAccess);
-			PrintEnumResult(EndpointAttributes.Localhost, EndpointAttributes.LocalSubnet);
-			PrintEnumResult(EndpointAttributes.Localhost, EndpointAttributes.Secure);
+			PrintEnumResult(RequestAttributes.Localhost, RequestAttributes.Secure | RequestAttributes.External);
+			PrintEnumResult(RequestAttributes.Localhost, RequestAttributes.Secure | RequestAttributes.InternalNetworkAccess);
+			PrintEnumResult(RequestAttributes.Localhost, RequestAttributes.LocalSubnet);
+			PrintEnumResult(RequestAttributes.Localhost, RequestAttributes.Secure);
 		}
 
-		public void PrintEnumResult(EndpointAttributes actual, EndpointAttributes required)
+		public void PrintEnumResult(RequestAttributes actual, RequestAttributes required)
 		{
 			Console.WriteLine(string.Format("({0} | {1}): {2}", actual, required, (actual | required)));
 			Console.WriteLine(string.Format("({0} & {1}): {2}", actual, required, (actual & required)));
@@ -222,6 +229,35 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			Console.WriteLine();
 		}
 
+	    [Test]
+	    public void Enum_masks_are_correct()
+	    {
+            const RequestAttributes network = RequestAttributes.Localhost | RequestAttributes.LocalSubnet | RequestAttributes.External;
+            Assert.That((network.ToAllowedFlagsSet() & network) == network);
+
+            const RequestAttributes security = RequestAttributes.Secure | RequestAttributes.InSecure;
+            Assert.That((security.ToAllowedFlagsSet() & security) == security);
+
+	        const RequestAttributes method =
+	            RequestAttributes.HttpHead | RequestAttributes.HttpGet | RequestAttributes.HttpPost |
+	            RequestAttributes.HttpPut | RequestAttributes.HttpDelete | RequestAttributes.HttpPatch |
+	            RequestAttributes.HttpOptions | RequestAttributes.HttpOther;
+            Assert.That((method.ToAllowedFlagsSet() & method) == method);
+
+            const RequestAttributes call = RequestAttributes.OneWay | RequestAttributes.Reply;
+            Assert.That((call.ToAllowedFlagsSet() & call) == call);
+
+	        const RequestAttributes format =
+	            RequestAttributes.Soap11 | RequestAttributes.Soap12 | RequestAttributes.Xml | RequestAttributes.Json |
+	            RequestAttributes.Jsv | RequestAttributes.ProtoBuf | RequestAttributes.Csv | RequestAttributes.Html |
+	            RequestAttributes.Yaml | RequestAttributes.MsgPack | RequestAttributes.FormatOther;
+            Assert.That((format.ToAllowedFlagsSet() & format) == format);
+
+	        const RequestAttributes endpoint =
+	            RequestAttributes.Http | RequestAttributes.MessageQueue | RequestAttributes.Tcp |
+	            RequestAttributes.EndpointOther;
+            Assert.That((endpoint.ToAllowedFlagsSet() & endpoint) == endpoint);
+        }
 	}
 
 }

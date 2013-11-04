@@ -1,10 +1,9 @@
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 {
 
-	[Restrict(EndpointAttributes.InternalNetworkAccess | EndpointAttributes.Secure | EndpointAttributes.HttpPost | EndpointAttributes.Xml)]
+	[Restrict(RequestAttributes.InternalNetworkAccess | RequestAttributes.Secure | RequestAttributes.HttpPost | RequestAttributes.Xml)]
 	[DataContract]
 	public class SecureDevEnvironmentRestriction { }
 

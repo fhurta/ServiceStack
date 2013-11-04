@@ -2,8 +2,7 @@
 using System.IO;
 using System.Text;
 using NUnit.Framework;
-using ServiceStack.Plugins.ProtoBuf;
-using ServiceStack.ServiceClient.Web;
+using ServiceStack.ProtoBuf;
 using ServiceStack.Text;
 using ServiceStack.WebHost.IntegrationTests.Services;
 
@@ -29,9 +28,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
             var rand = RandomString(32);
             using (var ms = new MemoryStream())
             {
-                ProtoBuf.Serializer.Serialize(ms, rand);
+                global::ProtoBuf.Serializer.Serialize(ms, rand);
                 ms.Position = 0;
-                var fromBytes = ProtoBuf.Serializer.Deserialize<string>(ms);
+                var fromBytes = global::ProtoBuf.Serializer.Deserialize<string>(ms);
 
                 Assert.That(rand, Is.EqualTo(fromBytes));
             }
@@ -45,11 +44,10 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
             try
             {
                 var fromEmail = RandomString(32);
-                var response = client.Post<ProtoBufEmail>(
-                    "/cached/protobuf", 
-                    new CachedProtoBufEmail {
-                        FromAddress = fromEmail
-                    });
+                var response = client.Post<ProtoBufEmail>("/cached/protobuf", new CachedProtoBufEmail
+                {
+                    FromAddress = fromEmail
+                });
 
                 response.PrintDump();
 
@@ -72,11 +70,10 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
             try
             {
                 var fromEmail = RandomString(32);
-                var response = client.Post<ProtoBufEmail>(
-                    "/cached/protobuf",
-                    new UncachedProtoBufEmail {
-                        FromAddress = fromEmail
-                    });
+                var response = client.Post<ProtoBufEmail>("/cached/protobuf", new UncachedProtoBufEmail
+                {
+                    FromAddress = fromEmail
+                });
 
                 response.PrintDump();
 

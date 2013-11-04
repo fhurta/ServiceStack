@@ -1,12 +1,8 @@
-using System;
-using System.Text;
-using Moq;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceInterface.Testing;
-using ServiceStack.WebHost.Endpoints.Extensions;
-using ServiceStack.WebHost.Endpoints.Tests.Mocks;
-using ServiceStack.WebHost.Endpoints.Tests.Support;
+using ServiceStack.Common.Tests;
+using ServiceStack.Testing;
+using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -23,7 +19,8 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 					"<html><head><meta http-equiv=\"refresh\" content=\"0;url={0}\"></head></html>",
 					url);
 
-				return new HttpResult(html, ContentType.Html) {
+                return new HttpResult(html, MimeTypes.Html)
+                {
 					Headers = { { "Location", url } },
 				};
 			}
@@ -32,19 +29,19 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void Test_response_with_html_result()
 		{
-			var mockResponse = new HttpResponseMock();
+            var mockResponse = new MockHttpResponse();
 
 			const string url = "http://www.servicestack.net";
 			var htmlResult = Html.RedirectTo(url);
 
 			var reponseWasAutoHandled = mockResponse.WriteToResponse(htmlResult, "text/xml");
 
-			Assert.That(reponseWasAutoHandled, Is.True);
+			Assert.That(reponseWasAutoHandled.Result, Is.True);
 
 			var expectedOutput = string.Format(
 				"<html><head><meta http-equiv=\"refresh\" content=\"0;url={0}\"></head></html>", url);
 
-			var writtenString = mockResponse.GetOutputStreamAsString();
+			var writtenString = mockResponse.ReadAsString();
 			Assert.That(writtenString, Is.EqualTo(expectedOutput));
 			Assert.That(mockResponse.Headers["Location"], Is.EqualTo(url));
 		}

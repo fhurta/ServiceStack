@@ -3,11 +3,9 @@ using System;
 namespace ServiceStack.DataAnnotations
 {
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Class | AttributeTargets.Struct)]
-	public class IndexAttribute : Attribute
+    public class IndexAttribute : AttributeBase
 	{
-		public IndexAttribute()
-		{
-		}
+		public IndexAttribute() {}
 
 		public IndexAttribute(bool unique)
 		{

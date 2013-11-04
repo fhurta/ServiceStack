@@ -1,18 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using ServiceStack.FluentValidation;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
 using NUnit.Framework;
-using ServiceStack.ServiceInterface.Validation;
 using System.Collections;
 using Funq;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.Service;
-using ServiceStack.WebHost.Endpoints.Support;
+using ServiceStack.Validation;
+using ServiceStack.Web;
 using ServiceStack.WebHost.Endpoints.Tests.Support;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
@@ -30,16 +23,16 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         bool ValidAddress(string address);
     }
 
-    public class UserValidator : AbstractValidator<UserValidation>, IRequiresHttpRequest
+    public class UserValidator : AbstractValidator<UserValidation>, IRequiresRequest
     {
         public IAddressValidator AddressValidator { get; set; }
-		public IHttpRequest HttpRequest { get; set; }
+		public IRequest Request { get; set; }
 
         public UserValidator()
         {
 			RuleFor(x => x.FirstName).Must(f =>
 			{
-				if (HttpRequest == null)
+				if (Request == null)
 					Assert.Fail();
 
 				return true;
@@ -58,9 +51,9 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public UserValidation Result { get; set; }
     }
 
-    public class UserValidationService : RestServiceBase<UserValidation>
+    public class UserValidationService : Service
     {
-        public override object OnGet(UserValidation request)
+        public object Get(UserValidation request)
         {
             return new OperationResponse { Result = request };
         }
@@ -85,10 +78,10 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             }
         }
 
-        UserAppHostHttpListener appHost;
+        static UserAppHostHttpListener appHost;
 
         [TestFixtureSetUp]
-        public void OnTestFixtureSetUp()
+        public void TestFixtureSetUp()
         {
             appHost = new UserAppHostHttpListener();
             appHost.Init();
@@ -96,18 +89,16 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
 
         [TestFixtureTearDown]
-        public void OnTestFixtureTearDown()
+        public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            EndpointHandlerBase.ServiceManager = null;
         }
 
         private static string ExpectedErrorCode = "ShouldNotBeEmpty";
 
         protected static IServiceClient UnitTestServiceClient()
         {
-            EndpointHandlerBase.ServiceManager = new ServiceManager(true, typeof(SecureService).Assembly);
-            return new DirectServiceClient(EndpointHandlerBase.ServiceManager);
+            return new DirectServiceClient(appHost.ServiceController);
         }
 
         public static IEnumerable ServiceClients

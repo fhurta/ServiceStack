@@ -3,7 +3,6 @@ using System.Net;
 using System.Threading;
 using NUnit.Framework;
 using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 using System.Linq;
 
@@ -36,7 +35,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public void OnTestFixtureTearDown()
 		{
 			appHost.Dispose();
-			appHost = null;
 		}
 
 		[SetUp]
@@ -56,7 +54,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		/// <summary>
 		/// *Request* DTO
 		/// </summary>
-		[ServiceStack.ServiceHost.RestService("/test/timed", "GET")]
+		[Route("/test/timed", "GET")]
 		public class Timed
 		{
 			/// <summary>
@@ -65,7 +63,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			public int Milliseconds { get; set; }
 		}
 
-		public class TimedService : ServiceInterface.Service
+		public class TimedService : Service
 		{
             public object Any(Timed request)
 			{
@@ -84,7 +82,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[TestCase(true)]
 		public void TestClientDropsConnection(bool writeErrorsToResponse)
 		{
-			EndpointHost.Config.WriteErrorsToResponse = writeErrorsToResponse;
+			HostContext.Config.WriteErrorsToResponse = writeErrorsToResponse;
 
 			const int sleepMs = 1000;
 			var url = string.Format("{0}test/timed?Milliseconds={1}", ListeningOn, sleepMs);

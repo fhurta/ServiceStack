@@ -1,11 +1,8 @@
 using System.Collections.Generic;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.Host;
 using ServiceStack.WebHost.Endpoints;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -58,24 +55,25 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public ResponseStatus ResponseStatus { get; set; }
 	}
 
-	public class TodoListService : RestServiceBase<TodoList>
+    [DefaultRequest(typeof(TodoList))]
+	public class TodoListService : Service
 	{
-		public override object OnGet(TodoList request)
+		public object Get(TodoList request)
 		{
 			return new TodoListResponse { Results = request };
 		}
 
-		public override object OnPost(TodoList request)
+		public object Post(TodoList request)
 		{
 			return new TodoListResponse { Results = request };
 		}
 
-		public override object OnPut(TodoList request)
+		public object Put(TodoList request)
 		{
 			return new TodoListResponse { Results = request };
 		}
 
-		public override object OnDelete(TodoList request)
+		public object Delete(TodoList request)
 		{
 			return new TodoListResponse { Results = request };
 		}
@@ -89,13 +87,10 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public class TodoListAppHostHttpListener
 			: AppHostHttpListenerBase
 		{
-
 			public TodoListAppHostHttpListener()
 				: base("TodoList Tests", typeof(TodoList).Assembly) { }
 
-			public override void Configure(Container container)
-			{
-			}
+			public override void Configure(Container container) {}
 		}
 
 		TodoListAppHostHttpListener appHost;
@@ -132,7 +127,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public void Can_Post_TodoList()
 		{
 			var serviceClient = new JsonServiceClient(ListeningOn);
-			var response = serviceClient.Post<TodoListResponse>("/todolist", new TodoList(Todos));
+            var response = serviceClient.Post<TodoListResponse>("/todolist", new TodoList(Todos));
 			Assert.That(response.Results, Is.EquivalentTo(Todos));
 		}
 

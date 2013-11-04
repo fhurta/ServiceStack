@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using ServiceStack.IO;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints;
 
 namespace ServiceStack.VirtualPath
 {
@@ -60,6 +59,16 @@ namespace ServiceStack.VirtualPath
         public virtual IEnumerable<IVirtualFile> GetAllMatchingFiles(string globPattern, int maxDepth = Int32.MaxValue)
         {
             return RootDirectory.GetAllMatchingFiles(globPattern, maxDepth);
+        }
+
+        public virtual IEnumerable<IVirtualFile> GetRootFiles()
+        {
+            return RootDirectory.Files;
+        }
+
+        public virtual IEnumerable<IVirtualDirectory> GetRootDirectories()
+        {
+            return RootDirectory.Directories;
         }
 
         public virtual bool IsSharedFile(IVirtualFile virtualFile)

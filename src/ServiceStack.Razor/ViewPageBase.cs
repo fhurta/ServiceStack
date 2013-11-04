@@ -6,19 +6,14 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Web;
-using ServiceStack.CacheAccess;
-using ServiceStack.Common.Web;
+using ServiceStack.Auth;
+using ServiceStack.Caching;
+using ServiceStack.Data;
 using ServiceStack.Html;
 using ServiceStack.Messaging;
 using ServiceStack.MiniProfiler;
-using ServiceStack.OrmLite;
 using ServiceStack.Redis;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Auth;
-using ServiceStack.ServiceInterface.ServiceModel;
-using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack.Web;
 using IHtmlString = System.Web.IHtmlString;
 
 namespace ServiceStack.Razor
@@ -57,9 +52,9 @@ namespace ServiceStack.Razor
     //Should handle all razor rendering functionality
     public abstract class RenderingPage
     {
-        public IHttpRequest Request { get; set; }
+        public IRequest Request { get; set; }
 
-        public IHttpResponse Response { get; set; }
+        public IResponse Response { get; set; }
 
         public StreamWriter Output { get; set; }
 
@@ -292,7 +287,7 @@ namespace ServiceStack.Razor
         void SetModel(object o);
     }
 
-    public abstract class ViewPageBase<TModel> : RenderingPage, IHasModel where TModel : class
+    public abstract class ViewPageBase<TModel> : RenderingPage, IHasModel
     {
         public string Layout
         {
@@ -311,10 +306,10 @@ namespace ServiceStack.Razor
         
         public virtual void SetModel(object o)
         {
-            var viewModel = o as TModel;
+            var viewModel = o is TModel ? (TModel)o : default(TModel);
             this.Model = viewModel;
 
-            if (viewModel == null)
+            if (Equals(viewModel, default(TModel)))
             {
                 this.ModelError = o;
             }
@@ -328,7 +323,7 @@ namespace ServiceStack.Razor
 
         public IAppHost AppHost
         {
-            get { return appHost ?? EndpointHost.AppHost; }
+            get { return appHost ?? ServiceStackHost.Instance; }
             set { appHost = value; }
         }
 
@@ -349,7 +344,7 @@ namespace ServiceStack.Razor
 
         private ResponseStatus ToResponseStatus<T>(T modelError)
         {
-            var ret = modelError.ToResponseStatus();
+            var ret = modelError.GetResponseStatus();
             if (ret != null) return ret;
 
             if (modelError is DynamicObject)
@@ -401,10 +396,10 @@ namespace ServiceStack.Razor
         private IAuthSession userSession;
         private string layout;
 
-        public virtual T GetSession<T>() where T : class, IAuthSession, new()
+        public virtual T GetSession<T>() where T : class, IAuthSession
         {
             if (userSession != null) return (T)userSession;
-            return (T)(userSession = SessionFeature.GetOrCreateSession<T>(Cache));
+            return (T)(userSession = SessionFeature.GetOrCreateSession<T>(Cache, Request, Response));
         }
 
         public string SessionKey

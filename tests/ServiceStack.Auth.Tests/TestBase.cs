@@ -1,7 +1,4 @@
-using System;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface.Auth;
 using ServiceStack.Text;
 
 namespace ServiceStack.Auth.Tests
@@ -15,17 +12,16 @@ namespace ServiceStack.Auth.Tests
         public void OnTestFixtureSetUp()
         {
             Client = new JsonServiceClient(BaseUri);
-            var response= Client.Post<AuthResponse>("/auth",
-                new ServiceInterface.Auth.Auth { UserName = "test1", Password = "test1" });
+            var response = Client.Post<AuthenticateResponse>("/auth",
+                new Authenticate { UserName = "test1", Password = "test1" });
 
-            Console.WriteLine(response.Dump());
+            response.PrintDump();
         }
 
         [TestFixtureTearDown]
         public void OnTestFixtureTearDown()
         {
-            Client.Get<AuthResponse>("/auth/logout");
+            Client.Get<AuthenticateResponse>("/auth/logout");
         }
     }
-
 }

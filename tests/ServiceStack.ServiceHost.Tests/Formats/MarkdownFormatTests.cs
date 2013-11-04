@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.Common.Utils;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Formats;
+using ServiceStack.Testing;
 using ServiceStack.Text;
 using ServiceStack.VirtualPath;
-using ServiceStack.WebHost.Endpoints.Formats;
 
 namespace ServiceStack.ServiceHost.Tests.Formats
 {

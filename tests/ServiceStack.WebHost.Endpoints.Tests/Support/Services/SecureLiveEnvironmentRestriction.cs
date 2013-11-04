@@ -1,9 +1,8 @@
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 {
-	[Restrict(EndpointAttributes.External | EndpointAttributes.Secure | EndpointAttributes.HttpPost | EndpointAttributes.Xml)]
+	[Restrict(RequestAttributes.External | RequestAttributes.Secure | RequestAttributes.HttpPost | RequestAttributes.Xml)]
 	[DataContract]
 	public class SecureLiveEnvironmentRestriction { }
 

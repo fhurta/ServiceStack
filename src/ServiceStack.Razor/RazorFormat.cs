@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using ServiceStack.Host;
 using ServiceStack.Html;
 using ServiceStack.IO;
 using ServiceStack.Logging;
 using ServiceStack.Razor.Managers;
-using ServiceStack.ServiceHost;
 using ServiceStack.Text;
 using ServiceStack.VirtualPath;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack.Web;
 
 namespace ServiceStack.Razor
 {
@@ -144,12 +143,12 @@ namespace ServiceStack.Razor
             return ViewManager.GetPageByPathInfo(pathInfo);
         }
 
-        public void ProcessRazorPage(IHttpRequest httpReq, RazorPage contentPage, object model, IHttpResponse httpRes)
+        public void ProcessRazorPage(IRequest httpReq, RazorPage contentPage, object model, IResponse httpRes)
         {
             PageResolver.ResolveAndExecuteRazorPage(httpReq, httpRes, model, contentPage);
         }
 
-        public void ProcessRequest(IHttpRequest httpReq, IHttpResponse httpRes, object dto)
+        public void ProcessRequest(IRequest httpReq, IResponse httpRes, object dto)
         {
             PageResolver.ProcessRequest(httpReq, httpRes, dto);
         }
@@ -210,23 +209,19 @@ namespace ServiceStack.Razor
             if (razorPage == null)
                 throw new ArgumentNullException("razorPage");
 
-            var mqContext = new MqRequestContext();
-
-            var httpReq = new MqRequest(mqContext);
+            var httpReq = new BasicRequest();
             if (layout != null)
             {
                 httpReq.Items[RazorPageResolver.LayoutKey] = layout;
             }
 
-            var httpRes = new MqResponse(mqContext);
-
             razorView = PageResolver.ResolveAndExecuteRazorPage(
                 httpReq: httpReq,
-                httpRes: httpRes,
+                httpRes: httpReq.Response,
                 model: model,
                 razorPage: razorPage);
 
-            var ms = (MemoryStream)httpRes.OutputStream;
+            var ms = (MemoryStream)httpReq.Response.OutputStream;
             return ms.ToArray().FromUtf8Bytes();
         }
     }

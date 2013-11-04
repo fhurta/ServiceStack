@@ -1,15 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.Text;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
@@ -18,29 +12,22 @@ namespace ServiceStack.WebHost.Endpoints.Tests
     class AppHostHttpListenerLongRunningBaseTests
     {
         private const string ListeningOn = "http://localhost:82/";
-        ExampleAppHostHttpListenerLongRunning appHost;
-
-        static AppHostHttpListenerLongRunningBaseTests()
-        {
-            LogManager.LogFactory = new ConsoleLogFactory();
-        }
+        ServiceStackHost appHost;
 
         [TestFixtureSetUp]
         public void OnTestFixtureStartUp()
         {
-            appHost = new ExampleAppHostHttpListenerLongRunning();
-            appHost.Init();
-            appHost.Start(ListeningOn);
+            appHost = new ExampleAppHostHttpListenerPool()
+                .Init()
+                .Start(ListeningOn);
 
-            System.Console.WriteLine("ExampleAppHost Created at {0}, listening on {1}",
-                                     DateTime.Now, ListeningOn);
+            Console.WriteLine("ExampleAppHost Created at {0}, listening on {1}", DateTime.Now, ListeningOn);
         }
 
         [TestFixtureTearDown]
         public void OnTestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]
@@ -91,7 +78,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         [Test]
         public void Can_call_jsv_debug_on_GetFactorial_WebService()
         {
-            const string url = ListeningOn + "jsv/syncreply/GetFactorial?ForNumber=3&debug=true";
+            const string url = ListeningOn + "jsv/reply/GetFactorial?ForNumber=3&debug=true";
             var contents = url.GetStringFromUrl();
 
 
@@ -162,8 +149,8 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             webReq.Accept = "*/*";
             using (var webRes = webReq.GetResponse())
             {
-                Assert.That(webRes.ContentType, Is.StringStarting(ContentType.Json));
-                response = webRes.DownloadText();
+                Assert.That(webRes.ContentType, Is.StringStarting(MimeTypes.Json));
+                response = webRes.ReadToEnd();
             }
 
             Assert.That(response, Is.Not.Null, "No response received");

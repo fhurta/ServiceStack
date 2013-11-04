@@ -1,9 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using ServiceStack.Common;
 using ServiceStack.IO;
 using ServiceStack.Text;
 
@@ -25,6 +22,7 @@ namespace ServiceStack.VirtualPath
         public virtual string RealPath { get { return GetRealPathToRoot(); } }
         public virtual bool IsDirectory { get { return false; } }
         public abstract DateTime LastModified { get; }
+        public abstract long Length { get; }
 
         protected AbstractVirtualFileBase(
             IVirtualPathProvider owningProvider, IVirtualDirectory directory)

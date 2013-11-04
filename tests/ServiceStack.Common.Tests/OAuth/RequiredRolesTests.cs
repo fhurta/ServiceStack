@@ -1,19 +1,28 @@
 ﻿using System.Linq;
 using NUnit.Framework;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Auth;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Auth;
+using ServiceStack.Configuration;
+using ServiceStack.Testing;
+using ServiceStack.Web;
 
 namespace ServiceStack.Common.Tests.OAuth
 {
     [TestFixture]
     public class RequiredRolesTests
     {
+        private ServiceStackHost appHost;
+
         [TestFixtureSetUp]
         public void TestFixtureSetUp()
         {
-            AuthService.Init(() => new AuthUserSession(), new CredentialsAuthProvider());
+            appHost = new BasicAppHost().Init();
+            AuthenticateService.Init(() => new AuthUserSession(), new CredentialsAuthProvider());
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
         }
 
         public class MockUserAuthRepository : InMemoryAuthRepository
@@ -24,22 +33,22 @@ namespace ServiceStack.Common.Tests.OAuth
                 this.userAuth = userAuth;
             }
 
-            public override UserAuth GetUserAuthByUserName(string userNameOrEmail)
+            public override IUserAuth GetUserAuthByUserName(string userNameOrEmail)
             {
                 return null;
             }
 
-            public override UserAuth CreateUserAuth(UserAuth newUser, string password)
+            public override IUserAuth CreateUserAuth(IUserAuth newUser, string password)
             {
                 return userAuth;
             }
 
-            public override UserAuth GetUserAuth(IAuthSession authSession, IOAuthTokens tokens)
+            public override IUserAuth GetUserAuth(IAuthSession authSession, IAuthTokens tokens)
             {
                 return userAuth;
             }
 
-            public override bool TryAuthenticate(string userName, string password, out UserAuth userAuth)
+            public override bool TryAuthenticate(string userName, string password, out IUserAuth userAuth)
             {
                 userAuth = this.userAuth;
                 return true;
@@ -55,7 +64,7 @@ namespace ServiceStack.Common.Tests.OAuth
             userAuth = new MockUserAuthRepository(userWithAdminRole);
         }
 
-        private RegistrationService GetRegistrationService()
+        private RegisterService GetRegistrationService()
         {
             var registrationService = RegistrationServiceTests.GetRegistrationService(authRepo: userAuth);
             var request = RegistrationServiceTests.GetValidRegistration(autoLogin: true);
@@ -71,14 +80,11 @@ namespace ServiceStack.Common.Tests.OAuth
 
             var requiredRole = new RequiredRoleAttribute(RoleNames.Admin);
 
-            var requestContext = (MockRequestContext)registrationService.RequestContext;
-            requestContext.Container.Register(userAuth);
-            var httpRes = requestContext.Get<IHttpResponse>();
+            var request = registrationService.Request;
+            HostContext.Container.Register(userAuth);
+            var httpRes = request.Response;
 
-            requiredRole.Execute(
-                requestContext.Get<IHttpRequest>(),
-                httpRes,
-                null);
+            requiredRole.Execute(request, request.Response, request.OperationName);
 
             Assert.That(!httpRes.IsClosed);
         }
@@ -88,13 +94,12 @@ namespace ServiceStack.Common.Tests.OAuth
         {
             var registrationService = GetRegistrationService();
 
-            var requestContext = (MockRequestContext)registrationService.RequestContext;
-            requestContext.Container.Register(userAuth);
-            var httpRes = requestContext.Get<IHttpResponse>();
+            var request = registrationService.Request;
+            HostContext.Container.Register(userAuth);
 
-            RequiredRoleAttribute.AssertRequiredRoles(requestContext, RoleNames.Admin);
+            RequiredRoleAttribute.AssertRequiredRoles(request, RoleNames.Admin);
 
-            Assert.That(!httpRes.IsClosed);
+            Assert.That(!request.Response.IsClosed);
         }
     }
 }

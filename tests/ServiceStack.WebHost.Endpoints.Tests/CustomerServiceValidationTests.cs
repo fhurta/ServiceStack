@@ -3,24 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.FluentValidation;
-using ServiceStack.Service;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.ServiceModel;
-using ServiceStack.ServiceInterface.Validation;
-using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints;
-using ServiceStack.WebHost.Endpoints.Support;
-using ServiceStack.WebHost.Endpoints.Tests;
+using ServiceStack.Validation;
 using ServiceStack.WebHost.Endpoints.Tests.Support;
-using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -86,24 +74,25 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public ResponseStatus ResponseStatus { get; set; }
 	}
 
-	public class CustomerService : RestServiceBase<Customers>
+    [DefaultRequest(typeof(Customers))]
+	public class CustomerService : Service
 	{
-		public override object OnGet(Customers request)
+		public object Get(Customers request)
 		{
 			return new CustomersResponse { Result = request };
 		}
 
-		public override object OnPost(Customers request)
+		public object Post(Customers request)
 		{
 			return new CustomersResponse { Result = request };
 		}
 
-		public override object OnPut(Customers request)
+		public object Put(Customers request)
 		{
 			return new CustomersResponse { Result = request };
 		}
 
-		public override object OnDelete(Customers request)
+		public object Delete(Customers request)
 		{
 			return new CustomersResponse { Result = request };
 		}
@@ -117,7 +106,6 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public class ValidationAppHostHttpListener
 			: AppHostHttpListenerBase
 		{
-
 			public ValidationAppHostHttpListener()
 				: base("Validation Tests", typeof(CustomerService).Assembly) { }
 
@@ -129,7 +117,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 			}
 		}
 
-		ValidationAppHostHttpListener appHost;
+		static ValidationAppHostHttpListener appHost;
 
 		[TestFixtureSetUp]
 		public void OnTestFixtureSetUp()
@@ -143,7 +131,6 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public void OnTestFixtureTearDown()
 		{
 			appHost.Dispose();
-		    EndpointHandlerBase.ServiceManager = null;
 		}
 
 		private static List<ResponseError> GetValidationFieldErrors(string httpMethod, Customers request)
@@ -199,9 +186,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
         [Test]
         public void ValidationFeature_add_request_filter_once()
         {
-            var old = appHost.RequestFilters.Count; 
+            var old = appHost.GlobalRequestFilters.Count; 
             appHost.LoadPlugin(new ValidationFeature());
-            Assert.That(old, Is.EqualTo(appHost.RequestFilters.Count));
+            Assert.That(old, Is.EqualTo(appHost.GlobalRequestFilters.Count));
         }
 		
 		[Test]
@@ -281,9 +268,8 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 
 		protected static IServiceClient UnitTestServiceClient()
 		{
-			EndpointHandlerBase.ServiceManager = new ServiceManager(true, typeof(SecureService).Assembly);
-			return new DirectServiceClient(EndpointHandlerBase.ServiceManager);
-		}
+            return new DirectServiceClient(appHost.ServiceController);
+        }
 
 		public static IEnumerable ServiceClients
 		{

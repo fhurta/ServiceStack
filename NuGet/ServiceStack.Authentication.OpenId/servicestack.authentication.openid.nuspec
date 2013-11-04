@@ -3,7 +3,7 @@
   <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>ServiceStack.Authentication.OpenId</id> 
     <title>OpenId Auth Providers for ServiceStack - inc. Google, Yahoo, MyOpenId</title>
-    <version>3.9.58</version> 
+    <version>4.0.0</version> 
     <authors>Demis Bellot</authors> 
     <owners>Demis Bellot</owners>
     <summary>OpenId Auth Providers for ServiceStack - inc. Google, Yahoo, MyOpenId</summary>
@@ -15,13 +15,13 @@
         https://github.com/ServiceStack/ServiceStack/wiki/Authentication-and-authorization
     </description> 
     <projectUrl>https://github.com/ServiceStack/ServiceStack</projectUrl>
-    <licenseUrl>https://github.com/ServiceStack/ServiceStack/blob/master/LICENSE</licenseUrl>
+    <licenseUrl>https://github.com/ServiceStack/ServiceStack/blob/master/license.txt</licenseUrl>
     <iconUrl>http://www.servicestack.net/logo-100x100.png</iconUrl>
     <tags>OpenId Google Yahoo MyOpenId Authentication Auth Provider ServiceStack REST Web Services ServiceStack</tags>
     <language>en-US</language>
-    <copyright>servicestack.net 2012 and contributors</copyright>
+    <copyright>Copyright 2013 Service Stack</copyright>
     <dependencies>
-        <dependency id="ServiceStack" />
+        <dependency id="ServiceStack" version="4.0" />
         <dependency id="DotNetOpenAuth.Ultimate" />
     </dependencies> 
   </metadata>

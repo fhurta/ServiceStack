@@ -5,12 +5,10 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common;
+using ServiceStack;
 using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
 using ServiceStack.Razor;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Testing;
 using ServiceStack.Text;
 
 namespace RazorRockstars.Console.Files
@@ -18,7 +16,7 @@ namespace RazorRockstars.Console.Files
     [TestFixture]
     public class RazorRockstars_FilesTests
     {
-        private const string ListeningOn = "http://*:1337/";
+        public const string ListeningOn = "http://*:1337/";
         public const string Host = "http://localhost:1337";
 
         //private const string ListeningOn = "http://*:1337/subdir/subdir2/";
@@ -51,6 +49,7 @@ namespace RazorRockstars.Console.Files
         [Test]
         public void RunFor10Mins()
         {
+            Process.Start(BaseUri);
             Thread.Sleep(TimeSpan.FromMinutes(10));
         }
 

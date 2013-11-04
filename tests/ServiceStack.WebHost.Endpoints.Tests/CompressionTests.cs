@@ -1,18 +1,14 @@
 using System;
 using System.Runtime.Serialization;
 using Funq;
-using Moq;
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.Common.Extensions;
-using ServiceStack.Common.Web;
+using ServiceStack.Host;
 using ServiceStack.Logging;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.Testing;
-using ServiceStack.ServiceModel.Serialization;
-using ServiceStack.WebHost.Endpoints.Extensions;
-using ServiceStack.WebHost.Endpoints.Tests.Mocks;
-using DataContractSerializer = ServiceStack.ServiceModel.Serialization.DataContractSerializer;
+using ServiceStack.Serialization;
+using ServiceStack.Testing;
+using ServiceStack.Text;
+using ServiceStack.Web;
+using DataContractSerializer = ServiceStack.Serialization.DataContractSerializer;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -70,47 +66,42 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void Test_response_with_CompressedResult()
 		{
-			EndpointHost.Config = new EndpointHostConfig(
-				"ServiceName",
-				new ServiceManager(GetType().Assembly));
+            using (new BasicAppHost(typeof(CompressionTests).Assembly).Init())
+		    {
+                var mockResponse = new MockHttpResponse();
 
-			var assembly = typeof (CompressionTests).Assembly;
-			EndpointHost.ConfigureHost(
-				new TestAppHost(new Container(), assembly), "Name", new ServiceManager(assembly));
+                var simpleDto = new TestCompress(1, "name");
 
-			var mockResponse = new HttpResponseMock();
+                var simpleDtoXml = DataContractSerializer.Instance.Parse(simpleDto);
 
-			var simpleDto = new TestCompress(1, "name");
+                const string expectedXml = "<TestCompress xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://schemas.ddnglobal.com/types/\"><Id>1</Id><Name>name</Name></TestCompress>";
 
-			var simpleDtoXml = DataContractSerializer.Instance.Parse(simpleDto);
+                Assert.That(simpleDtoXml, Is.EqualTo(expectedXml));
 
-			const string expectedXml = "<TestCompress xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://schemas.ddnglobal.com/types/\"><Id>1</Id><Name>name</Name></TestCompress>";
+                var simpleDtoZip = simpleDtoXml.Deflate();
 
-			Assert.That(simpleDtoXml, Is.EqualTo(expectedXml));
+                Assert.That(simpleDtoZip.Length, Is.GreaterThan(0));
 
-			var simpleDtoZip = simpleDtoXml.Deflate();
+                var compressedResult = new CompressedResult(simpleDtoZip);
 
-			Assert.That(simpleDtoZip.Length, Is.GreaterThan(0));
+                var reponseWasAutoHandled = mockResponse.WriteToResponse(
+                    compressedResult, CompressionTypes.Deflate);
 
-			var compressedResult = new CompressedResult(simpleDtoZip);
+                Assert.That(reponseWasAutoHandled.Result, Is.True);
 
-			var reponseWasAutoHandled = mockResponse.WriteToResponse(
-				compressedResult, CompressionTypes.Deflate);
+                //var bytesToWriteToResponseStream = new byte[simpleDtoZip.Length - 4];
+                //Array.Copy(simpleDtoZip, CompressedResult.Adler32ChecksumLength, bytesToWriteToResponseStream, 0, bytesToWriteToResponseStream.Length);
 
-			Assert.That(reponseWasAutoHandled, Is.True);
+                var bytesToWriteToResponseStream = simpleDtoZip;
 
-			//var bytesToWriteToResponseStream = new byte[simpleDtoZip.Length - 4];
-			//Array.Copy(simpleDtoZip, CompressedResult.Adler32ChecksumLength, bytesToWriteToResponseStream, 0, bytesToWriteToResponseStream.Length);
+                var writtenBytes = mockResponse.ReadAsBytes();
+                Assert.That(writtenBytes, Is.EqualTo(bytesToWriteToResponseStream));
+                Assert.That(mockResponse.ContentType, Is.EqualTo(MimeTypes.Xml));
+                Assert.That(mockResponse.Headers[HttpHeaders.ContentEncoding], Is.EqualTo(CompressionTypes.Deflate));
 
-			var bytesToWriteToResponseStream = simpleDtoZip;
-
-			var writtenBytes = mockResponse.GetOutputStreamAsBytes();
-			Assert.That(writtenBytes, Is.EqualTo(bytesToWriteToResponseStream));
-			Assert.That(mockResponse.ContentType, Is.EqualTo(MimeTypes.Xml));
-			Assert.That(mockResponse.Headers[HttpHeaders.ContentEncoding], Is.EqualTo(CompressionTypes.Deflate));
-
-			Log.Debug("Content-length: " + writtenBytes.Length);
-			Log.Debug(BitConverter.ToString(writtenBytes));
+                Log.Debug("Content-length: " + writtenBytes.Length);
+                Log.Debug(BitConverter.ToString(writtenBytes));
+            }
 		}
 
 		[Test]

@@ -2,9 +2,7 @@
 using System.Linq;
 using System.Net;
 using NUnit.Framework;
-using ServiceStack.Service;
 using ServiceStack.Text;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.WebHost.IntegrationTests.Services;
 
 namespace ServiceStack.WebHost.IntegrationTests.Tests

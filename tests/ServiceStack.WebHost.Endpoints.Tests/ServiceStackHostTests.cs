@@ -1,8 +1,4 @@
-using System;
-using System.Reflection;
-using System.Runtime.Serialization;
 using NUnit.Framework;
-using ServiceStack.ServiceHost;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Services;
 
@@ -11,14 +7,25 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 	[TestFixture]
 	public class ServiceStackHostTests
 	{
+        ServiceStackHost appHost;
+
+        [TestFixtureSetUp]
+        public void TestFixtureSetUp()
+        {
+            appHost = new TestAppHost().Init();
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
+
 		[Test]
 		public void Can_run_nested_service()
 		{
-			var host = new TestAppHost();
-			host.Init();
-
 			var request = new Nested();
-			var response = host.ExecuteService(request) as NestedResponse;
+			var response = appHost.ExecuteService(request) as NestedResponse;
 
 			Assert.That(response, Is.Not.Null);
 		}
@@ -26,11 +33,8 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void Can_run_test_service()
 		{
-			var host = new TestAppHost();
-			host.Init();
-
 			var request = new Test();
-			var response = host.ExecuteService(request) as TestResponse;
+			var response = appHost.ExecuteService(request) as TestResponse;
 
 			Assert.That(response, Is.Not.Null);
 			Assert.That(response.Foo, Is.Not.Null);
@@ -39,33 +43,13 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		[Test]
 		public void Call_AsyncOneWay_endpoint_on_TestService_calls_Execute()
 		{
-			var host = new TestAppHost();
-			host.Init();
-
 			TestService.ResetStats();
 
 			var request = new Test();
-			var response = host.ExecuteService(request, EndpointAttributes.OneWay) as TestResponse;
+			var response = appHost.ExecuteService(request, RequestAttributes.OneWay) as TestResponse;
 
 			Assert.That(response, Is.Not.Null);
 			Assert.That(response.ExecuteTimes, Is.EqualTo(1));
-			Assert.That(response.ExecuteAsyncTimes, Is.EqualTo(0));
-		}
-
-		[Test]
-		public void Call_AsyncOneWay_endpoint_on_AsyncTestService_calls_ExecuteAsync()
-		{
-			var host = new TestAppHost();
-			host.Init();
-
-			TestAsyncService.ResetStats();
-
-			var request = new TestAsync();
-			var response = host.ExecuteService(request, EndpointAttributes.OneWay) as TestAsyncResponse;
-
-			Assert.That(response, Is.Not.Null);
-			Assert.That(response.ExecuteTimes, Is.EqualTo(0));
-			Assert.That(response.ExecuteAsyncTimes, Is.EqualTo(1));
 		}
 	}
 }

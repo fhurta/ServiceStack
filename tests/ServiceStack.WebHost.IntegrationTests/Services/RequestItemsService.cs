@@ -1,6 +1,4 @@
 ﻿using System;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.ServiceModel;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -15,7 +13,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
         public ResponseStatus ResponseStatus { get; set; }
     }
 
-    public class RequestItemsService : ServiceInterface.Service
+    public class RequestItemsService : Service
     {
         public object Any(RequestItems request)
         {

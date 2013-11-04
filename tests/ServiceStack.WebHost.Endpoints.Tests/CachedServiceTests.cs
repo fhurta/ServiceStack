@@ -1,9 +1,5 @@
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.Plugins.ProtoBuf;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface;
-using ServiceStack.Text;
+using ServiceStack.ProtoBuf;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
 namespace ServiceStack.WebHost.Endpoints.Tests

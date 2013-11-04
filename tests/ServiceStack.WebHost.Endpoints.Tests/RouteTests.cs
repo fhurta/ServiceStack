@@ -1,11 +1,7 @@
 ﻿using Funq;
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
+using ServiceStack.Formats;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Formats;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -26,7 +22,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]
@@ -36,7 +31,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 .GetStringFromUrl(responseFilter: httpRes =>
                 {
                     httpRes.ContentType.Print();
-                    Assert.That(httpRes.ContentType.MatchesContentType(ContentType.Html));
+                    Assert.That(httpRes.ContentType.MatchesContentType(MimeTypes.Html));
                 });
 
             Assert.That(response, Is.StringStarting("<!doctype html>"));
@@ -49,7 +44,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 .GetStringFromUrl(responseFilter: httpRes =>
                 {
                     httpRes.ContentType.Print();
-                    Assert.That(httpRes.ContentType.MatchesContentType(ContentType.Json));
+                    Assert.That(httpRes.ContentType.MatchesContentType(MimeTypes.Json));
                 });
 
             Assert.That(response.ToLower(), Is.EqualTo( "{\"data\":\"foo\"}"));
@@ -62,7 +57,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 .GetStringFromUrl(responseFilter: httpRes =>
                 {
                     httpRes.ContentType.Print();
-                    Assert.That(httpRes.ContentType.MatchesContentType(ContentType.Xml));
+                    Assert.That(httpRes.ContentType.MatchesContentType(MimeTypes.Xml));
                 });
 
             Assert.That(response, Is.EqualTo("<CustomRoute xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://schemas.servicestack.net/types\"><Data>foo</Data></CustomRoute>"));
@@ -75,7 +70,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 .GetStringFromUrl(responseFilter: httpRes =>
                 {
                     httpRes.ContentType.Print();
-                    Assert.That(httpRes.ContentType.MatchesContentType(ContentType.Html));
+                    Assert.That(httpRes.ContentType.MatchesContentType(MimeTypes.Html));
                 });
 
             Assert.That(response, Is.StringStarting("<!doctype html>"));
@@ -88,7 +83,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 .GetStringFromUrl(responseFilter: httpRes =>
                 {
                     httpRes.ContentType.Print();
-                    Assert.That(httpRes.ContentType.MatchesContentType(ContentType.Csv));
+                    Assert.That(httpRes.ContentType.MatchesContentType(MimeTypes.Csv));
                 });
 
             Assert.That(response, Is.EqualTo("Data\r\nfoo\r\n"));
@@ -101,7 +96,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
         public override void Configure(Container container)
         {
-            SetConfig(new EndpointHostConfig {
+            SetConfig(new HostConfig {
                 AllowRouteContentTypeExtensions = true
             });
 

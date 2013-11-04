@@ -5,13 +5,13 @@
 // Authors:
 //   Demis Bellot (demis.bellot@gmail.com)
 //
-// Copyright 2013 ServiceStack.
+// Copyright 2013 Service Stack LLC. All Rights Reserved.
 //
-// Licensed under the same terms of Redis and ServiceStack: new BSD license.
+// Licensed under the same terms of ServiceStack.
 //
 
 using System.Collections.Generic;
-using ServiceStack.DesignPatterns.Model;
+using ServiceStack.Model;
 
 namespace ServiceStack.Redis
 {

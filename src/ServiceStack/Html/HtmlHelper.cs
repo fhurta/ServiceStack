@@ -8,11 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Web;
-using ServiceStack.Common.Web;
 using ServiceStack.Html.AntiXsrf;
-using ServiceStack.ServiceHost;
+using ServiceStack.Support.Markdown;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Support.Markdown;
+using ServiceStack.Web;
 
 namespace ServiceStack.Html
 {
@@ -24,10 +23,9 @@ namespace ServiceStack.Html
         public static readonly string ValidationMessageValidCssClassName = "field-validation-valid";
         public static readonly string ValidationSummaryCssClassName = "validation-summary-errors";
         public static readonly string ValidationSummaryValidCssClassName = "validation-summary-valid";
-#if NET_4_0
-        private DynamicViewDataDictionary _dynamicViewDataDictionary;
-#endif
-		public static List<Type> HtmlExtensions = new List<Type> 
+        private DynamicViewDataDictionary viewBag;
+
+        public static List<Type> HtmlExtensions = new List<Type> 
 		{
 			typeof(DisplayTextExtensions),
 			typeof(InputExtensions),
@@ -53,8 +51,8 @@ namespace ServiceStack.Html
 
 		public bool RenderHtml { get; protected set; }
 
-        public IHttpRequest HttpRequest { get; set; }
-        public IHttpResponse HttpResponse { get; set; }
+        public IRequest HttpRequest { get; set; }
+        public IResponse HttpResponse { get; set; }
         public StreamWriter Writer { get; set; }
         public IViewEngine ViewEngine { get; set; }
 
@@ -63,7 +61,7 @@ namespace ServiceStack.Html
 		public Dictionary<string, object> ScopeArgs { get; protected set; }
 	    private ViewDataDictionary viewData;
 
-        public void Init(IViewEngine viewEngine, IHttpRequest httpReq, IHttpResponse httpRes, IRazorView razorPage, 
+        public void Init(IViewEngine viewEngine, IRequest httpReq, IResponse httpRes, IRazorView razorPage, 
             Dictionary<string, object> scopeArgs = null, ViewDataDictionary viewData = null)
         {
             ViewEngine = viewEngine;
@@ -147,18 +145,11 @@ namespace ServiceStack.Html
             set { ViewContext.SetUnobtrusiveJavaScriptEnabled(value); }
         }
 
-#if NET_4_0
         public dynamic ViewBag
         {
-            get
-            {
-                if (_dynamicViewDataDictionary == null) {
-                    _dynamicViewDataDictionary = new DynamicViewDataDictionary(() => ViewData);
-                }
-                return _dynamicViewDataDictionary;
-            }
+            get { return viewBag ?? (viewBag = new DynamicViewDataDictionary(() => ViewData)); }
         }
-#endif
+
         public ViewContext ViewContext { get; private set; }
 
 	    public ViewDataDictionary ViewData
@@ -444,7 +435,7 @@ namespace ServiceStack.Html
 
 	public static class HtmlHelperExtensions
 	{
-	    public static IHttpRequest GetHttpRequest(this HtmlHelper html)
+	    public static IRequest GetHttpRequest(this HtmlHelper html)
 	    {
 	        return html != null ? html.HttpRequest : null;
 	    }

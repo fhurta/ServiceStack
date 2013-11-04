@@ -1,33 +1,25 @@
 ﻿using System.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.WebHost.Endpoints.Extensions;
-using ServiceStack.WebHost.Endpoints.Support;
+using ServiceStack.Host.Handlers;
+using ServiceStack.Web;
 
 namespace ServiceStack
 {
-    public class ServiceStackHttpHandler : IHttpHandler, IServiceStackHttpHandler
+    public class ServiceStackHttpHandler : HttpAsyncTaskHandler
     {
-        IServiceStackHttpHandler servicestackHandler;
+        readonly IServiceStackHandler servicestackHandler;
 
-        public ServiceStackHttpHandler(IServiceStackHttpHandler servicestackHandler)
+        public ServiceStackHttpHandler(IServiceStackHandler servicestackHandler)
         {
             this.servicestackHandler = servicestackHandler;
         }
 
-        public virtual void ProcessRequest(HttpContext context)
+        public override void ProcessRequest(HttpContextBase context)
         {
-            ProcessRequest(
-                context.Request.ToRequest(), 
-                context.Response.ToResponse(),
-                null);
+            var httpReq = context.ToRequest(GetType().Name);
+            ProcessRequest(httpReq, httpReq.Response, httpReq.OperationName);
         }
 
-        public bool IsReusable
-        {
-            get { return false; }
-        }
-
-        public virtual void ProcessRequest(IHttpRequest httpReq, IHttpResponse httpRes, string operationName)
+        public override void ProcessRequest(IRequest httpReq, IResponse httpRes, string operationName)
         {
             servicestackHandler.ProcessRequest(httpReq, httpRes, operationName ?? httpReq.OperationName);
         }

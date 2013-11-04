@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Auth;
+using ServiceStack.Auth;
 using ServiceStack.Text;
 using ServiceStack.WebHost.IntegrationTests.Services;
 
@@ -13,13 +11,20 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 	[TestFixture]
 	public class ManageRolesTests : AuthTestsBase
 	{
-		protected Registration registration;
+		protected Register register;
 
 		[TestFixtureSetUp]
 		public void TestFixtureSetUp()
 		{
-			registration = CreateAdminUser();
+            Tracer.Instance = new Tracer.ConsoleTracer();
+			register = CreateAdminUser();
 		}
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            Tracer.Instance = new Tracer.NullTracer();
+        }
 
 		public string RoleName1 = "Role1";
 		public string RoleName2 = "Role2";
@@ -29,11 +34,11 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		public string Permission1 = "Permission1";
 		public string Permission2 = "Permission2";
 
-		public Registration RegisterNewUser(bool? autoLogin = null)
+		public Register RegisterNewUser(bool? autoLogin = null)
 		{
 			var userId = Environment.TickCount % 10000;
 
-			var newUserRegistration = new Registration {
+			var newUserRegistration = new Register {
 				UserName = "UserName" + userId,
 				DisplayName = "DisplayName" + userId,
 				Email = "user{0}@sf.com".Fmt(userId),
@@ -48,6 +53,12 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 			return newUserRegistration;
 		}
 
+	    [Test]
+	    public void Authenticationg_does_return_session_cookies()
+	    {
+            var client = AuthenticateWithAdminUser();
+	        Assert.That(client.CookieContainer.Count, Is.GreaterThan(0));
+	    }
 
 		[Test]
 		public void Cannot_assign_roles_with_normal_user()

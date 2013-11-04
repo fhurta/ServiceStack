@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -31,9 +30,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public string Result { get; set; }
 	}
 
-	public class HelloService : IService<Hello>
+	public class HelloService : IService
 	{
-		public object Execute(Hello request)
+		public object Any(Hello request)
 		{
 			return new HelloResponse { Result = "Hello, " + request.Name };
 		}
@@ -41,9 +40,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 
 	public class TestFilterAttribute : ResponseFilterAttribute
 	{
-		public override void Execute(IHttpRequest req, IHttpResponse res, object requestDto)
-		{
-		}
+		public override void Execute(IRequest req, IResponse res, object requestDto) {}
 	}
 
 	[Route("/hello2")]
@@ -62,9 +59,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 	}
 
 	[TestFilter]
-	public class Hello2Service : IService<Hello2>
+	public class Hello2Service : IService
 	{
-		public object Execute(Hello2 request)
+		public object Any(Hello2 request)
 		{
 			return request.Name;
 		}

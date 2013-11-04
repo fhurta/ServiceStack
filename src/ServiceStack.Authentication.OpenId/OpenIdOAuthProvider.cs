@@ -2,17 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using DotNetOpenAuth.Messaging;
+using DotNetOpenAuth.OpenId;
 using DotNetOpenAuth.OpenId.Extensions.AttributeExchange;
 using DotNetOpenAuth.OpenId.Extensions.SimpleRegistration;
 using DotNetOpenAuth.OpenId.RelyingParty;
-using ServiceStack.Common;
-using ServiceStack.Common.Web;
+using ServiceStack.Auth;
 using ServiceStack.Configuration;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Auth;
 using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.Authentication.OpenId
 {
@@ -20,10 +17,12 @@ namespace ServiceStack.Authentication.OpenId
     {
         public const string DefaultName = "OpenId";
 
-        public OpenIdOAuthProvider(IResourceManager appSettings, string name = DefaultName, string realm = null)
+        public static IOpenIdApplicationStore OpenIdApplicationStore { get; set; }
+
+        public OpenIdOAuthProvider(IAppSettings appSettings, string name = DefaultName, string realm = null)
             : base(appSettings, realm, name) { }
 
-        public virtual ClaimsRequest CreateClaimsRequest(IHttpRequest httpReq)
+        public virtual ClaimsRequest CreateClaimsRequest(IRequest httpReq)
         {
             return new ClaimsRequest {
                 Country = DemandLevel.Request,
@@ -34,11 +33,19 @@ namespace ServiceStack.Authentication.OpenId
             };
         }
 
-        public override object Authenticate(IServiceBase authService, IAuthSession session, Auth request)
+        protected virtual OpenIdRelyingParty CreateOpenIdRelyingParty(IOpenIdApplicationStore store)
+        {
+            // it matters
+            return store != null
+                ? new OpenIdRelyingParty(store)
+                : new OpenIdRelyingParty();
+        }
+
+        public override object Authenticate(IServiceBase authService, IAuthSession session, Authenticate request)
         {
             var tokens = Init(authService, ref session, request);
 
-            var httpReq = authService.RequestContext.Get<IHttpRequest>();
+            var httpReq = authService.Request;
             var isOpenIdRequest = !httpReq.GetParam("openid.mode").IsNullOrEmpty();
 
             if (!isOpenIdRequest)
@@ -49,7 +56,7 @@ namespace ServiceStack.Authentication.OpenId
 
                 try
                 {
-                    using (var openid = new OpenIdRelyingParty())
+                    using (var openid = CreateOpenIdRelyingParty(OpenIdApplicationStore))
                     {
                         var openIdRequest = openid.CreateRequest(openIdUrl);
 
@@ -84,7 +91,7 @@ namespace ServiceStack.Authentication.OpenId
 
             if (isOpenIdRequest)
             {
-                using (var openid = new OpenIdRelyingParty())
+                using (var openid = CreateOpenIdRelyingParty(OpenIdApplicationStore))
                 {
                     var response = openid.GetResponse();
                     if (response != null)
@@ -139,7 +146,7 @@ namespace ServiceStack.Authentication.OpenId
             return authInfo;
         }
 
-        protected override void LoadUserAuthInfo(AuthUserSession userSession, IOAuthTokens tokens, Dictionary<string, string> authInfo)
+        protected override void LoadUserAuthInfo(AuthUserSession userSession, IAuthTokens tokens, Dictionary<string, string> authInfo)
         {
             if (authInfo.ContainsKey("user_id"))
                 tokens.UserId = authInfo.GetValueOrDefault("user_id");
@@ -187,7 +194,7 @@ namespace ServiceStack.Authentication.OpenId
             LoadUserOAuthProvider(userSession, tokens);
         }
 
-        public override void LoadUserOAuthProvider(IAuthSession authSession, IOAuthTokens tokens)
+        public override void LoadUserOAuthProvider(IAuthSession authSession, IAuthTokens tokens)
         {
             var userSession = authSession as AuthUserSession;
             if (userSession == null) return;
@@ -265,7 +272,7 @@ namespace ServiceStack.Authentication.OpenId
             return ret;
         }
 
-        public override bool IsAuthorized(IAuthSession session, IOAuthTokens tokens, Auth request = null)
+        public override bool IsAuthorized(IAuthSession session, IAuthTokens tokens, Authenticate request = null)
         {
             if (request != null)
             {

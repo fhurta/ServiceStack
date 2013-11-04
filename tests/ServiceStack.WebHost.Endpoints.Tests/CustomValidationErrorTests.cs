@@ -3,13 +3,10 @@ using System.IO;
 using System.Net;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
 using ServiceStack.FluentValidation;
 using ServiceStack.FluentValidation.Results;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Validation;
 using ServiceStack.Text;
+using ServiceStack.Validation;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -53,7 +50,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         }
     }
 
-    public class CustomValidationService : ServiceInterface.Service
+    public class CustomValidationService : Service
     {
         public object Get(CustomError request)
         {
@@ -78,7 +75,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using ServiceStack.Html;
-using ServiceStack.ServiceHost;
+using ServiceStack.Web;
 
 namespace ServiceStack.Razor
 {
@@ -14,7 +14,7 @@ namespace ServiceStack.Razor
 			get { return typeof(DynamicRequestObject); }
 		}
 
-        public void Init(IViewEngine viewEngine, IHttpRequest httpReq, IHttpResponse httpRes)
+        public void Init(IViewEngine viewEngine, IRequest httpReq, IResponse httpRes)
         {
             base.Request = httpReq;
             base.Response = httpRes;
@@ -36,7 +36,7 @@ namespace ServiceStack.Razor
         }
 	}
 
-    public abstract class ViewPage<TModel> : ViewPageBase<TModel>, IRazorView where TModel : class
+    public abstract class ViewPage<TModel> : ViewPageBase<TModel>, IRazorView
     {
         public HtmlHelper<TModel> Html = new HtmlHelper<TModel>();
 
@@ -47,7 +47,7 @@ namespace ServiceStack.Razor
             get { return Html; }
         }
 
-        public void Init(IViewEngine viewEngine, IHttpRequest httpReq, IHttpResponse httpRes)
+        public void Init(IViewEngine viewEngine, IRequest httpReq, IResponse httpRes)
         {
             base.Request = httpReq;
             base.Response = httpRes;

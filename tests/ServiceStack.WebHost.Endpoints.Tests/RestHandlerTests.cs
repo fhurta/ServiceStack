@@ -1,27 +1,52 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 using Moq;
 using NUnit.Framework;
-using ServiceStack.ServiceHost;
+using ServiceStack.Host;
+using ServiceStack.Web;
+using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
 	[TestFixture]
 	public class RestHandlerTests
 	{
+        ServiceStackHost appHost;
+
+        [TestFixtureSetUp]
+        public void TestFixtureSetUp()
+        {
+            appHost = new TestAppHost().Init();
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
+
 		[Test]
 		public void Throws_binding_exception_when_unable_to_match_path_values()
 		{
 			var path = "/request/{will_not_match_property_id}/pathh";
 			var request = ConfigureRequest(path);
 			var response = new Mock<IHttpResponse>().Object;
-			ConfigureHost();
 
 			var handler = new RestHandler
 			{
 				RestPath = new RestPath(typeof(RequestType), path)
 			};
 
-			Assert.Throws<RequestBindingException>(() => handler.ProcessRequest(request, response, string.Empty));
+		    try
+		    {
+    		    handler.ProcessRequestAsync(request, response, string.Empty).Wait();
+                Assert.Fail("Should throw RequestBindingException");
+		    }
+		    catch (AggregateException aex)
+		    {
+                Assert.That(aex.InnerExceptions.Count, Is.EqualTo(1));
+                Assert.That(aex.InnerException is RequestBindingException);
+		    }
 		}
 
 		[Test]
@@ -30,14 +55,22 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			var path = "/request/{id}/path";
 			var request = ConfigureRequest(path);
 			var response = new Mock<IHttpResponse>().Object;
-			ConfigureHost();
 
 			var handler = new RestHandler
 			{
 				RestPath = new RestPath(typeof(RequestType), path)
 			};
 
-			Assert.Throws<RequestBindingException>(() => handler.ProcessRequest(request, response, string.Empty));
+            try
+            {
+                handler.ProcessRequestAsync(request, response, string.Empty).Wait();
+                Assert.Fail("Should throw RequestBindingException");
+            }
+            catch (AggregateException aex)
+            {
+                Assert.That(aex.InnerExceptions.Count, Is.EqualTo(1));
+                Assert.That(aex.InnerException is RequestBindingException);
+            }
 		}
 
 		private IHttpRequest ConfigureRequest(string path)
@@ -47,12 +80,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			request.Expect(x => x.PathInfo).Returns(path);
 
 			return request.Object;
-		}
-
-		private void ConfigureHost()
-		{
-			var host = ServiceHostTestBase.CreateAppHost();
-			EndpointHost.ConfigureHost(host, string.Empty, new ServiceManager(true, typeof(RestHandlerTests).Assembly));		
 		}
 
 		public class RequestType

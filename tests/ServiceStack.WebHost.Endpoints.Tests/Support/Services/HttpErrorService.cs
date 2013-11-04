@@ -2,10 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Runtime.Serialization;
-using ServiceStack.Common.Extensions;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.Text;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 {
@@ -39,7 +36,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 		public ResponseStatus ResponseStatus { get; set; }
 	}
 
-	public class HttpErrorService : ServiceInterface.Service
+	public class HttpErrorService : Service
 	{
 	    public object Any(HttpError request)
 		{
@@ -58,7 +55,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 				throw ex;
 
 			var httpStatus = (HttpStatusCode)request.StatusCode.Value;
-			throw new Common.Web.HttpError(httpStatus, ex);
+			throw new ServiceStack.HttpError(httpStatus, ex);
 		}
 	}
 

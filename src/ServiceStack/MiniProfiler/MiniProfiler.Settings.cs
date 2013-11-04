@@ -6,7 +6,7 @@ using System.Reflection;
 using ServiceStack.MiniProfiler.Helpers;
 using ServiceStack.MiniProfiler.SqlFormatters;
 using ServiceStack.MiniProfiler.Storage;
-using ServiceStack.ServiceHost;
+using ServiceStack.Web;
 
 namespace ServiceStack.MiniProfiler
 {
@@ -219,23 +219,7 @@ namespace ServiceStack.MiniProfiler
             /// The formatter applied to the SQL being rendered (used only for UI)
             /// </summary>
             public static ISqlFormatter SqlFormatter { get; set; }
-
-            /// <summary>
-            /// Provides user identification for a given profiling request.
-            /// </summary>
-            [Obsolete("Obselete, use WebRequestProfilerProvider.UserProvider")]
-            public static IUserProvider UserProvider
-            {
-                get
-                {
-                    return WebRequestProfilerProvider.Settings.UserProvider;
-                }
-                set
-                {
-                    WebRequestProfilerProvider.Settings.UserProvider = value;
-                }
-            }
-
+            
             /// <summary>
             /// Assembly version of this dank MiniProfiler.
             /// </summary>
@@ -255,7 +239,7 @@ namespace ServiceStack.MiniProfiler
             /// <remarks>
             /// Both the HttpRequest and MiniProfiler parameters that will be passed into this function should never be null.
             /// </remarks>
-            public static Func<IHttpRequest, Profiler, bool> Results_Authorize { get; set; }
+            public static Func<IRequest, Profiler, bool> Results_Authorize { get; set; }
 
             /// <summary>
             /// Make sure we can at least store profiler results to the http runtime cache.

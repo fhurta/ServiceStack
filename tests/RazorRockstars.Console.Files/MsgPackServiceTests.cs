@@ -1,17 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Runtime.Serialization;
+﻿using System.IO;
 using System.Text;
 using MsgPack;
 using MsgPack.Serialization;
 using NUnit.Framework;
-using ServiceStack.Common;
+using ServiceStack;
 using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
-using ServiceStack.Plugins.MsgPack;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.MsgPack;
 using ServiceStack.Text;
 
 namespace RazorRockstars.Console.Files
@@ -99,7 +93,6 @@ namespace RazorRockstars.Console.Files
         {
             if (appHost == null) return;
             appHost.Dispose();
-            appHost = null;
         }
 
         MsgPackEmail request = new MsgPackEmail {

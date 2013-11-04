@@ -1,18 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
+using ServiceStack.Host.HttpListener;
 using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Extensions;
-using ServiceStack.WebHost.Endpoints.Support;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
@@ -21,7 +16,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
     public class AppHostListenerBaseTests
     {
         private const string ListeningOn = "http://localhost:82/";
-        ExampleAppHostHttpListener appHost;
+        ServiceStackHost appHost;
 
         static AppHostListenerBaseTests()
         {
@@ -31,19 +26,17 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         [TestFixtureSetUp]
         public void OnTestFixtureStartUp()
         {
-            appHost = new ExampleAppHostHttpListener();
-            appHost.Init();
-            appHost.Start(ListeningOn);
+            appHost = new ExampleAppHostHttpListener()
+                .Init()
+                .Start(ListeningOn);
 
-            System.Console.WriteLine("ExampleAppHost Created at {0}, listening on {1}",
-                                     DateTime.Now, ListeningOn);
+            "ExampleAppHost Created at {0}, listening on {1}".Print(DateTime.Now, ListeningOn);
         }
 
         [TestFixtureTearDown]
         public void OnTestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]
@@ -94,7 +87,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         [Test]
         public void Can_call_jsv_debug_on_GetFactorial_WebService()
         {
-            const string url = ListeningOn + "jsv/syncreply/GetFactorial?ForNumber=3&debug=true";
+            const string url = ListeningOn + "jsv/reply/GetFactorial?ForNumber=3&debug=true";
             var contents = url.GetStringFromUrl();
 
             Console.WriteLine("JSV DEBUG: " + contents);
@@ -164,8 +157,8 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             webReq.Accept = "*/*";
             using (var webRes = webReq.GetResponse())
             {
-                Assert.That(webRes.ContentType, Is.StringStarting(ContentType.Json));
-                response = webRes.DownloadText();
+                Assert.That(webRes.ContentType, Is.StringStarting(MimeTypes.Json));
+                response = webRes.ReadToEnd();
             }
 
             Assert.That(response, Is.Not.Null, "No response received");
@@ -228,7 +221,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             foreach (var entry in map)
             {
-                var handlerPath = HttpListenerRequestWrapper.GetHandlerPathIfAny(entry.Key);
+                var handlerPath = ListenerRequest.GetHandlerPathIfAny(entry.Key);
                 Assert.That(handlerPath, Is.EqualTo(entry.Value));
             }
         }

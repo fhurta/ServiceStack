@@ -1,10 +1,6 @@
 ﻿using NUnit.Framework;
-using ServiceStack.Service;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack.Caching;
 using Funq;
-using ServiceStack.CacheAccess;
-using ServiceStack.CacheAccess.Providers;
 
 namespace ServiceStack.ServiceHost.Tests
 {
@@ -20,7 +16,7 @@ namespace ServiceStack.ServiceHost.Tests
         public int RequestCount { get; set; }
     }
 
-    public class ServiceCreationService : ServiceInterface.Service
+    public class ServiceCreationService : Service
     {
         public int RequestCounter = 0;
 
@@ -58,8 +54,6 @@ namespace ServiceStack.ServiceHost.Tests
         [TestFixtureSetUp]
         public void OnTestFixtureSetUp()
         {
-            EndpointHostConfig.SkipRouteValidation = true;
-
             appHost = new AttributeFiltersAppHostHttpListener();
             appHost.Init();
             appHost.Start(ListeningOn);

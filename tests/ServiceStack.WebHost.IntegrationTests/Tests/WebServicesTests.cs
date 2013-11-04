@@ -1,12 +1,7 @@
 using System;
-using System.Net;
 using NUnit.Framework;
-using ServiceStack.Service;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Common.Tests;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Support;
 using ServiceStack.WebHost.IntegrationTests.Services;
 
 namespace ServiceStack.WebHost.IntegrationTests.Tests
@@ -27,12 +22,6 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		}
 
 		protected override void Configure(Funq.Container container) { }
-
-        [TestFixtureTearDown]
-        public void TestFixtureTearDown()
-        {
-            EndpointHandlerBase.ServiceManager = null;
-        }
 
 		[Test]
 		public void Does_Execute_ReverseService()
@@ -97,9 +86,8 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 	{
 		protected override IServiceClient CreateNewServiceClient()
 		{
-			EndpointHandlerBase.ServiceManager = new ServiceManager(true, typeof(ReverseService).Assembly);
-			return new DirectServiceClient(this, EndpointHandlerBase.ServiceManager);
-		}
+            return new DirectServiceClient(this, AppHost.ServiceController);
+        }
 	}
 
 	public class XmlIntegrationTests : WebServicesTests

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using ServiceStack.WebHost.Endpoints;
 
 namespace ServiceStack.Html
 {

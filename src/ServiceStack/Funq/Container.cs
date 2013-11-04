@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using ServiceStack.Common;
-using ServiceStack.ServiceHost;
-using ServiceStack.Text;
+using ServiceStack;
+using ServiceStack.Web;
 
 namespace Funq
 {
@@ -365,7 +364,7 @@ namespace Funq
                 TService resolved;
                 if (CheckAdapterFirst
                     && Adapter != null
-                    && typeof(TService) != typeof(IRequestContext)
+                    && typeof(TService) != typeof(IRequest)
                     && !Equals(default(TService), (resolved = Adapter.TryResolve<TService>())))
                 {
                     return new ServiceEntry<TService, TFunc>(
@@ -417,7 +416,7 @@ namespace Funq
                     else
                     {
                         if (Adapter != null
-                            && (typeof(TService) != typeof(IRequestContext)))
+                            && (typeof(TService) != typeof(IRequest)))
                         {
                             return new ServiceEntry<TService, TFunc>(
                                 (TFunc)(object)(Func<Container, TService>)(c => Adapter.TryResolve<TService>()))

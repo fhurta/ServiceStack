@@ -3,15 +3,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.CSharp;
-using ServiceStack.Common.Extensions;
-using ServiceStack.Common.Utils;
+using ServiceStack.Common;
 using ServiceStack.IO;
 using ServiceStack.Logging;
 using ServiceStack.Razor.Compilation;
 using ServiceStack.Razor.Managers.RazorGen;
-using ServiceStack.ServiceHost;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Extensions;
+using ServiceStack.Web;
 
 namespace ServiceStack.Razor.Managers
 {
@@ -49,7 +47,7 @@ namespace ServiceStack.Razor.Managers
                             .Where(IsWatchedFile);
 
             // you can override IsWatchedFile to filter
-            files.ForEach(x => TrackPage(x));
+            files.Each(x => TrackPage(x));
         }
 
         public virtual RazorPage AddPage(string filePath)
@@ -124,7 +122,7 @@ namespace ServiceStack.Razor.Managers
             return null;
         }
 
-        public virtual RazorPage GetPage(IHttpRequest request, object dto)
+        public virtual RazorPage GetPage(IRequest request, object dto)
         {
             var normalizePath = NormalizePath(request, dto);
             return GetPage(normalizePath);
@@ -143,7 +141,7 @@ namespace ServiceStack.Razor.Managers
             return combinedPath;
         }
 
-        public virtual RazorPage GetPageByName(string pageName, IHttpRequest request, object dto)
+        public virtual RazorPage GetPageByName(string pageName, IRequest request, object dto)
         {
             RazorPage page = null;
             var htmlPageName = Path.ChangeExtension(pageName, Config.RazorFileExtension);
@@ -176,7 +174,7 @@ namespace ServiceStack.Razor.Managers
         }
 
         static char[] InvalidFileChars = new[]{'<','>','`'}; //Anonymous or Generic type names
-        private string NormalizePath(IHttpRequest request, object dto)
+        private string NormalizePath(IRequest request, object dto)
         {
             if (dto != null && !(dto is DynamicRequestObject)) // this is for a view inside /views
             {

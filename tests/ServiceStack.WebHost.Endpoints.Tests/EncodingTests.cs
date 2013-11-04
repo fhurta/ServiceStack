@@ -1,15 +1,11 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
     //[Route("/HelloWorld/Greeting/{FirstName}/{LastName}", "GET")]
     [Route("/HelloWorld/Greeting/{FirstName}", "GET")]
-    [Restrict(EndpointAttributes.InternalNetworkAccess)]
+    [Restrict(RequestAttributes.InternalNetworkAccess)]
     public class HelloWorldName : IReturn<HelloWorldGreeting>
     {
         public string FirstName { get; set; }
@@ -21,7 +17,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public string Greeting { get; set; }
     }
 
-    public class HelloWorldService : ServiceInterface.Service
+    public class HelloWorldService : Service
     {
         public HelloWorldGreeting Get(HelloWorldName request)
         {
@@ -56,7 +52,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         private HelloWorldGreeting PerformRequest(string firstName, string lastName)

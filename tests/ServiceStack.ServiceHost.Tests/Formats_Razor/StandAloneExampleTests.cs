@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 using ServiceStack.Razor;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Testing;
 using ServiceStack.Text;
 using ServiceStack.VirtualPath;
 
@@ -9,6 +9,20 @@ namespace ServiceStack.ServiceHost.Tests.Formats_Razor
     [TestFixture]
     public class StandAloneExampleTests
     {
+        private ServiceStackHost appHost;
+
+        [TestFixtureSetUp]
+        public void TestFixtureSetUp()
+        {
+            appHost = new BasicAppHost().Init();
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
+
         [Test]
         public void Simple_static_example()
         {

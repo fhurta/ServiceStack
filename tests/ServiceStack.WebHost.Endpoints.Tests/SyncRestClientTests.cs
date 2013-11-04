@@ -1,13 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using NUnit.Framework;
-using ServiceStack.Common.Extensions;
 using ServiceStack.Logging;
-using ServiceStack.Logging.Support.Logging;
-using ServiceStack.Service;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceModel.Serialization;
+using ServiceStack.Serialization;
 using ServiceStack.Text;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 
@@ -46,9 +41,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
         public void Dispose()
         {
-            if (appHost == null) return;
             appHost.Dispose();
-            appHost = null;
         }
 
         protected abstract IRestClient CreateRestClient();
@@ -177,9 +170,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 }
             };
 
-            var response = client.Put<InboxPostResponseRequestResponse>(
-                "inbox/123/responses",
-                request);
+            var response = client.Put<InboxPostResponseRequestResponse>("inbox/123/responses", request);
 
             Assert.That(response.Id, Is.EqualTo(request.Id));
             Assert.That(response.Responses[0].PageElementId,
@@ -193,9 +184,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             try
             {
-                var response = client.Put<InboxPostResponseRequestResponse>(
-                    "inbox/123/responses",
-                    new InboxPostResponseRequest());
+                var response = client.Put<InboxPostResponseRequestResponse>("inbox/123/responses", new InboxPostResponseRequest());
 
                 response.PrintDump();
 
@@ -214,9 +203,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
             try
             {
-                var response = client.Put<InboxPost>(
-                    "inbox/123/responses",
-                    new InboxPost { Throw = true });
+                var response = client.Put<InboxPost>("inbox/123/responses", new InboxPost { Throw = true });
 
                 response.PrintDump();
 
@@ -246,14 +233,14 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         {
             var isActioncalledGlobal = false;
             var isActioncalledLocal = false;
-            ServiceClientBase.HttpWebResponseFilter = r => isActioncalledGlobal = true;
+            ServiceClientBase.GlobalResponseFilter = r => isActioncalledGlobal = true;
             var restClient = (JsonServiceClient)CreateRestClient();
-            restClient.LocalHttpWebResponseFilter = r => isActioncalledLocal = true;
+            restClient.ResponseFilter = r => isActioncalledLocal = true;
             restClient.Get<MoviesResponse>("movies");
             Assert.That(isActioncalledGlobal, Is.True);
             Assert.That(isActioncalledLocal, Is.True);
 
-            ServiceClientBase.HttpWebResponseFilter = null;
+            ServiceClientBase.GlobalResponseFilter = null;
         }
     }
 

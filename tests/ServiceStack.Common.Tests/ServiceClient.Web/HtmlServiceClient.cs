@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceModel.Serialization;
-using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.Common.Tests.ServiceClient.Web
 {
@@ -31,16 +25,16 @@ namespace ServiceStack.Common.Tests.ServiceClient.Web
 
         public override string Accept
         {
-            get { return Common.Web.ContentType.Html; }
+            get { return MimeTypes.Html; }
         }
 
         public override string ContentType
         {
             // Only used by the base class when POST-ing.
-            get { return Common.Web.ContentType.FormUrlEncoded; }
+            get { return MimeTypes.FormUrlEncoded; }
         }
 
-        public override void SerializeToStream(IRequestContext requestContext, object request, Stream stream)
+        public override void SerializeToStream(IRequest requestContext, object request, Stream stream)
         {
             var queryString = QueryStringSerializer.SerializeToString(request);
             stream.Write(queryString);

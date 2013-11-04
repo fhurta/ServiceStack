@@ -1,9 +1,8 @@
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 {
-	[Restrict(EndpointAttributes.LocalSubnet)]
+	[Restrict(RequestAttributes.LocalSubnet)]
 	[DataContract]
 	public class LocalSubnetRestriction { }
 

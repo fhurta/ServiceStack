@@ -3,11 +3,8 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using NUnit.Framework;
-using ServiceStack.Common.Utils;
-using ServiceStack.Common.Web;
-using ServiceStack.Service;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.Text;
+using ServiceStack.Web;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Services;
 
@@ -34,18 +31,17 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			}
 		}
 
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
+
 		[Test]
 		[Explicit("Helps debugging when you need to find out WTF is going on")]
 		public void Run_for_30secs()
 		{
 			Thread.Sleep(30000);
-		}
-
-		[TestFixtureTearDown]
-		public void TestFixtureTearDown()
-		{
-			if (appHost != null) appHost.Dispose();
-			appHost = null;
 		}
 
 		public void AssertResponse<T>(HttpWebResponse response, Action<T> customAssert)
@@ -65,16 +61,16 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			T result;
 			switch (contentType)
 			{
-				case ContentType.Xml:
+                case MimeTypes.Xml:
 					result = XmlSerializer.DeserializeFromString<T>(contents);
 					break;
 
-				case ContentType.Json:
-				case ContentType.Json + ContentType.Utf8Suffix:
+                case MimeTypes.Json:
+                case MimeTypes.Json + ContentFormat.Utf8Suffix:
 					result = JsonSerializer.DeserializeFromString<T>(contents);
 					break;
 
-				case ContentType.Jsv:
+                case MimeTypes.Jsv:
 					result = TypeSerializer.DeserializeFromString<T>(contents);
 					break;
 
@@ -97,7 +93,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			var uploadFile = new FileInfo("~/TestExistingDir/upload.html".MapProjectPath());
 
 			var webRequest = (HttpWebRequest)WebRequest.Create(ListeningOn + "/fileuploads");
-			webRequest.Accept = ContentType.Json;
+            webRequest.Accept = MimeTypes.Json;
 			var webResponse = webRequest.UploadFile(uploadFile, MimeTypes.GetMimeType(uploadFile.Name));
 
 			AssertResponse<FileUploadResponse>((HttpWebResponse)webResponse, r =>
@@ -211,7 +207,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
                 var uploadFile = new FileInfo("~/TestExistingDir/upload.html".MapProjectPath());
                 bool isFilterCalled = false;
-                ServiceClientBase.HttpWebRequestFilter = request => { isFilterCalled = true; };
+                ServiceClientBase.GlobalRequestFilter = request => { isFilterCalled = true; };
 
                 var response = client.PostFile<FileUploadResponse>(
                     ListeningOn + "/fileuploads", uploadFile, MimeTypes.GetMimeType(uploadFile.Name));
@@ -226,7 +222,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             }
             finally
             {
-                ServiceClientBase.HttpWebRequestFilter = null;  //reset this to not cause side-effects
+                ServiceClientBase.GlobalRequestFilter = null;  //reset this to not cause side-effects
             }
         }
 
@@ -242,7 +238,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                     var fileName = "upload.html";
 
                     bool isFilterCalled = false;
-                    ServiceClientBase.HttpWebRequestFilter = request =>
+                    ServiceClientBase.GlobalRequestFilter = request =>
                     {
                         isFilterCalled = true;
 
@@ -262,7 +258,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             }
             finally
             {
-                ServiceClientBase.HttpWebRequestFilter = null;  //reset this to not cause side-effects
+                ServiceClientBase.GlobalRequestFilter = null;  //reset this to not cause side-effects
             }
         }
 

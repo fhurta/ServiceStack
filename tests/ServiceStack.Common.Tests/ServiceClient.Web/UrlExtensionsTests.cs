@@ -1,6 +1,5 @@
 ﻿using System;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
 using ServiceStack.Text;
 
 namespace ServiceStack.Common.Tests.ServiceClient.Web

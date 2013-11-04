@@ -1,13 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Net;
+﻿using System.IO;
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
 using ServiceStack.Text;
-using ServiceStack.WebHost.IntegrationTests.Services;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.IntegrationTests.Tests
 {
@@ -22,9 +16,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		public string Result { get; set; }
 	}
 
-	public class RawRequestService : IService<RawRequest>
+	public class RawRequestService : IService
 	{
-		public object Execute(RawRequest request)
+		public object Any(RawRequest request)
 		{
 			var rawRequest = request.RequestStream.ToUtf8String();
 			return new RawRequestResponse { Result = rawRequest };
@@ -39,7 +33,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		{
 			var rawData = "<<(( 'RAW_DATA' ))>>";
 			var requestUrl = Config.ServiceStackBaseUri + "/rawrequest";
-            var json = requestUrl.PutStringToUrl(rawData, contentType: ContentType.PlainText, acceptContentType: ContentType.Json);
+            var json = requestUrl.PutStringToUrl(rawData, contentType: MimeTypes.PlainText, accept: MimeTypes.Json);
 			var response = json.FromJson<RawRequestResponse>();
 			Assert.That(response.Result, Is.EqualTo(rawData));
 		}
@@ -49,7 +43,7 @@ namespace ServiceStack.WebHost.IntegrationTests.Tests
 		{
 			var rawData = "<<(( 'RAW_DATA' ))>>";
 			var requestUrl = Config.ServiceStackBaseUri + "/rawrequest";
-            var json = requestUrl.PutStringToUrl(rawData, contentType: ContentType.PlainText, acceptContentType: ContentType.Json);
+            var json = requestUrl.PutStringToUrl(rawData, contentType: MimeTypes.PlainText, accept: MimeTypes.Json);
 			var response = json.FromJson<RawRequestResponse>();
 			Assert.That(response.Result, Is.EqualTo(rawData));
 		}

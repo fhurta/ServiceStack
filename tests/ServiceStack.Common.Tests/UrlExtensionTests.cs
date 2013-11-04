@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
 using ServiceStack.Text;
 
 namespace ServiceStack.Common.Tests

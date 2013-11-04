@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -20,9 +19,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 	}
 
 	public class BatchWidgetValidationRequestService 
-		: IService<BatchWidgetValidationRequest>
+		: IService
 	{
-		public object Execute(BatchWidgetValidationRequest request)
+		public object Any(BatchWidgetValidationRequest request)
 		{
 			throw new NotImplementedException();
 		}
@@ -62,9 +61,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 	}
 
 	public class WidgetValidationRequestService
-		: IService<WidgetValidationRequest>
+		: IService
 	{
-		public object Execute(WidgetValidationRequest request)
+		public object Any(WidgetValidationRequest request)
 		{
 			throw new NotImplementedException();
 		}

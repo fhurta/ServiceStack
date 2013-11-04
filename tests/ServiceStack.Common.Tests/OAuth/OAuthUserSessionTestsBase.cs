@@ -4,15 +4,14 @@ using System.Collections.Generic;
 using System.IO;
 using Moq;
 using NUnit.Framework;
-using ServiceStack.Common.Utils;
+using ServiceStack.Auth;
 using ServiceStack.Configuration;
+using ServiceStack.Host;
 using ServiceStack.OrmLite;
 using ServiceStack.OrmLite.SqlServer;
 using ServiceStack.Redis;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.ServiceInterface.Auth;
-using ServiceStack.ServiceInterface.Testing;
+using ServiceStack.Testing;
+using ServiceStack.Web;
 
 namespace ServiceStack.Common.Tests.OAuth
 {
@@ -74,8 +73,7 @@ namespace ServiceStack.Common.Tests.OAuth
 				}
 				else
 				{
-					var dbFactory = new OrmLiteConnectionFactory(
-						":memory:", autoDisposeConnection:false, dialectProvider:SqliteDialect.Provider);
+					var dbFactory = new OrmLiteConnectionFactory(":memory:", SqliteDialect.Provider);
 					var sqliteRepo = new OrmLiteAuthRepository(dbFactory);
 					sqliteRepo.CreateMissingTables();
 					sqliteRepo.Clear();
@@ -92,36 +90,36 @@ namespace ServiceStack.Common.Tests.OAuth
 		}
 
 		protected Mock<IServiceBase> mockService;
-		protected MockRequestContext requestContext;
+        protected BasicRequest requestContext;
 		protected IServiceBase service;
 
-		protected OAuthTokens facebookGatewayTokens = new OAuthTokens {
+		protected AuthTokens facebookGatewayTokens = new AuthTokens {
 			UserId = "623501766",
 			DisplayName = "Demis Bellot FB",
 			FirstName = "Demis",
 			LastName = "Bellot",
 			Email = "demis.bellot@gmail.com",
 		};
-		protected OAuthTokens twitterGatewayTokens = new OAuthTokens {
+		protected AuthTokens twitterGatewayTokens = new AuthTokens {
 			DisplayName = "Demis Bellot TW"
 		};
-		protected OAuthTokens facebookAuthTokens = new OAuthTokens {
+		protected AuthTokens facebookAuthTokens = new AuthTokens {
 			Provider = FacebookAuthProvider.Name,
 			AccessTokenSecret = "AAADDDCCCoR848BAMkQIZCRIKnVWZAvcKWqo7Ibvec8ebV9vJrfZAz8qVupdu5EbjFzmMmbwUFDbcNDea9H6rOn5SVn8es7KYZD",
 		};
-		protected OAuthTokens twitterAuthTokens = new OAuthTokens {
+		protected AuthTokens twitterAuthTokens = new AuthTokens {
 			Provider = TwitterAuthProvider.Name,
 			RequestToken = "JGGZZ22CCqgB1GR5e0EmGFxzyxGTw2rwEFFcC8a9o7g",
 			RequestTokenSecret = "qKKCCUUJ2R10bMieVQZZad7iSwWkPYJmtBYzPoM9q0",
 			UserId = "133371690876022785",
 		};
-		protected Registration registrationDto;
+		protected Register RegisterDto;
 
-		protected void InitTest(IUserAuthRepository userAuthRepository)
+        protected void InitTest(IUserAuthRepository userAuthRepository)
 		{
 			((IClearable)userAuthRepository).Clear();
 
-			var appsettingsMock = new Mock<IResourceManager>();
+			var appsettingsMock = new Mock<IAppSettings>();
 			var appSettings = appsettingsMock.Object;
 
 			new AuthFeature(null, new IAuthProvider[] {
@@ -129,15 +127,16 @@ namespace ServiceStack.Common.Tests.OAuth
 				new BasicAuthProvider(),
 				new FacebookAuthProvider(appSettings),
 				new TwitterAuthProvider(appSettings)
-			}).Register(null);
+			})
+            .Register(null);
 
 			mockService = new Mock<IServiceBase>();
-			mockService.Expect(x => x.TryResolve<IUserAuthRepository>()).Returns(userAuthRepository);
-			requestContext = new MockRequestContext();
-			mockService.Expect(x => x.RequestContext).Returns(requestContext);
+            mockService.Expect(x => x.TryResolve<IAuthRepository>()).Returns(userAuthRepository);
+			requestContext = new BasicRequest();
+			mockService.Expect(x => x.Request).Returns(requestContext);
 			service = mockService.Object;
 
-			registrationDto = new Registration {
+			RegisterDto = new Register {
 				UserName = "UserName",
 				Password = "p@55word",
 				Email = "as@if.com",
@@ -147,45 +146,41 @@ namespace ServiceStack.Common.Tests.OAuth
 			};
 		}
 
-		public static RegistrationService GetRegistrationService(
-			IUserAuthRepository userAuthRepository,
+		public static RegisterService GetRegistrationService(
+            IUserAuthRepository userAuthRepository,
 			AuthUserSession oAuthUserSession = null,
-			MockRequestContext requestContext = null)
+            BasicRequest request = null)
 		{
-			if (requestContext == null)
-				requestContext = new MockRequestContext();
+			if (request == null)
+                request = new BasicRequest();
 			if (oAuthUserSession == null)
-				oAuthUserSession = requestContext.ReloadSession();
+				oAuthUserSession = request.ReloadSession();
 
-			var httpReq = requestContext.Get<IHttpRequest>();
-			var httpRes = requestContext.Get<IHttpResponse>();
-			oAuthUserSession.Id = httpRes.CreateSessionId(httpReq);
-			httpReq.Items[ServiceExtensions.RequestItemsSessionKey] = oAuthUserSession;
+            oAuthUserSession.Id = request.Response.CreateSessionId(request);
+            request.Items[ServiceExtensions.RequestItemsSessionKey] = oAuthUserSession;
 
-			var mockAppHost = new BasicAppHost {
-				Container = requestContext.Container
-			};
+			var mockAppHost = new BasicAppHost();
 
-			requestContext.Container.Register(userAuthRepository);
+            mockAppHost.Container.Register<IAuthRepository>(userAuthRepository);
 
-		    var authService = new AuthService {
-                RequestContext = requestContext,
+		    var authService = new AuthenticateService {
+                Request = request,
             };
-            authService.SetAppHost(mockAppHost);
+            authService.SetResolver(mockAppHost);
             mockAppHost.Register(authService);
 
-			var registrationService = new RegistrationService {
-				UserAuthRepo = userAuthRepository,
-				RequestContext = requestContext,
+			var registrationService = new RegisterService {
+				AuthRepo = userAuthRepository,
+				Request = request,
 				RegistrationValidator =
 					new RegistrationValidator { UserAuthRepo = RegistrationServiceTests.GetStubRepo() },
 			};
-			registrationService.SetAppHost(mockAppHost);
+			registrationService.SetResolver(mockAppHost);
 
 			return registrationService;
 		}
 
-		public static void AssertEqual(UserAuth userAuth, Registration request)
+        public static void AssertEqual(IUserAuth userAuth, Register request)
 		{
 			Assert.That(userAuth, Is.Not.Null);
 			Assert.That(userAuth.UserName, Is.EqualTo(request.UserName));
@@ -195,11 +190,11 @@ namespace ServiceStack.Common.Tests.OAuth
 			Assert.That(userAuth.LastName, Is.EqualTo(request.LastName));
 		}
 
-		protected AuthUserSession RegisterAndLogin(IUserAuthRepository userAuthRepository, AuthUserSession oAuthUserSession)
+        protected AuthUserSession RegisterAndLogin(IUserAuthRepository userAuthRepository, AuthUserSession oAuthUserSession)
 		{
 			Register(userAuthRepository, oAuthUserSession);
 
-			Login(registrationDto.UserName, registrationDto.Password, oAuthUserSession);
+			Login(RegisterDto.UserName, RegisterDto.Password, oAuthUserSession);
 
 			oAuthUserSession = requestContext.ReloadSession();
 			return oAuthUserSession;
@@ -212,20 +207,20 @@ namespace ServiceStack.Common.Tests.OAuth
 
 			var credentialsAuth = GetCredentialsAuthConfig();
 			return credentialsAuth.Authenticate(service, oAuthUserSession,
-				new Auth {
+				new Authenticate {
 					provider = CredentialsAuthProvider.Name,
-					UserName = registrationDto.UserName,
-					Password = registrationDto.Password,
+					UserName = RegisterDto.UserName,
+					Password = RegisterDto.Password,
 				});
 		}
 
-		protected object Register(IUserAuthRepository userAuthRepository, AuthUserSession oAuthUserSession, Registration registration = null)
+        protected object Register(IUserAuthRepository userAuthRepository, AuthUserSession oAuthUserSession, Register register = null)
 		{
-			if (registration == null)
-				registration = registrationDto;
+			if (register == null)
+				register = RegisterDto;
 
 			var registrationService = GetRegistrationService(userAuthRepository, oAuthUserSession, requestContext);
-			var response = registrationService.Post(registration);
+			var response = registrationService.Post(register);
 			Assert.That(response as IHttpError, Is.Null);
 			return response;
 		}

@@ -1,66 +1,59 @@
 ﻿using System;
 using System.Net;
 using System.Web;
-using ServiceStack.Common;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.WebHost.Endpoints;
-using ServiceStack.WebHost.Endpoints.Extensions;
+using ServiceStack.Web;
 
 namespace ServiceStack
 {
     public static class HttpExtensions
     {
-        public static HttpRequestContext ToRequestContext(this HttpContext httpContext, object requestDto = null)
+        public static string ToAbsoluteUri(this IReturn requestDto, string httpMethod = null, string formatFallbackToPredefinedRoute = null)
         {
-            return new HttpRequestContext(
-                httpContext.Request.ToRequest(),
-                httpContext.Response.ToResponse(),
-                requestDto);
-        }
-
-        public static HttpRequestContext ToRequestContext(this HttpListenerContext httpContext, object requestDto = null)
-        {
-            return new HttpRequestContext(
-                httpContext.Request.ToRequest(),
-                httpContext.Response.ToResponse(),
-                requestDto);
-        }
-
-        public static string ToAbsoluteUri(this IReturn request, string httpMethod = null, string formatFallbackToPredefinedRoute = null)
-        {
-            var relativeUrl = request.ToUrl(
+            var relativeUrl = requestDto.ToUrl(
                 httpMethod ?? HttpMethods.Get,
-                formatFallbackToPredefinedRoute ?? EndpointHost.Config.DefaultContentType.ToContentFormat());
+                formatFallbackToPredefinedRoute ?? HostContext.Config.DefaultContentType.ToContentFormat());
 
-            var absoluteUrl = EndpointHost.Config.WebHostUrl.CombineWith(relativeUrl);
+            return relativeUrl.ToAbsoluteUri();
+        }
+
+        public static string ToAbsoluteUri(this object requestDto, string httpMethod = null, string formatFallbackToPredefinedRoute = null)
+        {
+            var relativeUrl = requestDto.ToUrl(
+                httpMethod ?? HttpMethods.Get,
+                formatFallbackToPredefinedRoute ?? HostContext.Config.DefaultContentType.ToContentFormat());
+
+            return relativeUrl.ToAbsoluteUri();
+        }
+
+        public static string ToAbsoluteUri(this string relativeUrl)
+        {
+            var absoluteUrl = HostContext.Config.WebHostUrl.CombineWith(relativeUrl);
             return absoluteUrl;
         }
 
         /// <summary>
         /// End a ServiceStack Request
         /// </summary>
-        public static void EndRequest(this HttpResponse httpRes, bool skipHeaders = false)
+        public static void EndRequest(this HttpResponseBase httpRes, bool skipHeaders = false)
         {
             if (!skipHeaders) httpRes.ApplyGlobalResponseHeaders();
             httpRes.Close();
-            EndpointHost.CompleteRequest();
+            HostContext.CompleteRequest();
         }
 
         /// <summary>
         /// End a ServiceStack Request
         /// </summary>
-        public static void EndRequest(this IHttpResponse httpRes, bool skipHeaders = false)
+        public static void EndRequest(this IResponse httpRes, bool skipHeaders = false)
         {
             httpRes.EndHttpHandlerRequest(skipHeaders: skipHeaders);
-            EndpointHost.CompleteRequest();
+            HostContext.CompleteRequest();
         }
 
         /// <summary>
         /// End a HttpHandler Request
         /// </summary>
-        public static void EndHttpHandlerRequest(this HttpResponse httpRes, bool skipHeaders = false, bool skipClose = false, bool closeOutputStream = false, Action<HttpResponse> afterBody = null)
+        public static void EndHttpHandlerRequest(this HttpResponseBase httpRes, bool skipHeaders = false, bool skipClose = false, bool closeOutputStream = false, Action<HttpResponseBase> afterBody = null)
         {
             if (!skipHeaders) httpRes.ApplyGlobalResponseHeaders();
             if (afterBody != null) afterBody(httpRes);
@@ -75,7 +68,7 @@ namespace ServiceStack
         /// <summary>
         /// End a HttpHandler Request
         /// </summary>
-        public static void EndHttpHandlerRequest(this IHttpResponse httpRes, bool skipHeaders = false, bool skipClose = false, Action<IHttpResponse> afterBody = null)
+        public static void EndHttpHandlerRequest(this IResponse httpRes, bool skipHeaders = false, bool skipClose = false, Action<IResponse> afterBody = null)
         {
             if (!skipHeaders) httpRes.ApplyGlobalResponseHeaders();
             if (afterBody != null) afterBody(httpRes);
@@ -89,9 +82,9 @@ namespace ServiceStack
         /// <summary>
         /// End a ServiceStack Request with no content
         /// </summary>
-        public static void EndRequestWithNoContent(this IHttpResponse httpRes)
+        public static void EndRequestWithNoContent(this IResponse httpRes)
         {
-            if (EndpointHost.Config == null || EndpointHost.Config.Return204NoContentForEmptyResponse)
+            if (HostContext.Config == null || HostContext.Config.Return204NoContentForEmptyResponse)
             {
                 if (httpRes.StatusCode == (int)HttpStatusCode.OK)
                 {

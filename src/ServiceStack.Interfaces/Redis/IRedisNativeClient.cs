@@ -5,9 +5,9 @@
 // Authors:
 //   Demis Bellot (demis.bellot@gmail.com)
 //
-// Copyright 2013 ServiceStack.
+// Copyright 2013 Service Stack LLC. All Rights Reserved.
 //
-// Licensed under the same terms of Redis and ServiceStack: new BSD license.
+// Licensed under the same terms of ServiceStack.
 //
 
 using System;
@@ -70,8 +70,6 @@ namespace ServiceStack.Redis
 		long Decr(string key);
 		long DecrBy(string key, int decrBy);
 		long Append(string key, byte[] value);
-		[Obsolete("Was renamed to GetRange in 2.4")]
-		byte[] Substr(string key, int fromIndex, int toIndex);
 		byte[] GetRange(string key, int fromIndex, int toIndex);
 		long SetRange(string key, int offset, byte[] value);
 		long GetBit(string key, int offset);
@@ -118,6 +116,7 @@ namespace ServiceStack.Redis
 		//Redis Set operations
 		byte[][] SMembers(string setId);
 		long SAdd(string setId, byte[] value);
+		long SAdd(string setId, byte[][] value);
 		long SRem(string setId, byte[] value);
 		byte[] SPop(string setId);
 		void SMove(string fromSetId, string toSetId, byte[] value);
@@ -184,6 +183,7 @@ namespace ServiceStack.Redis
 		byte[][] PSubscribe(params string[] toChannelsMatchingPatterns);
 		byte[][] PUnSubscribe(params string[] toChannelsMatchingPatterns);
 		byte[][] ReceiveMessages();
+        IRedisSubscription CreateSubscription();
 
         //Redis LUA support
 		long EvalInt(string luaBody, int numberOfKeys, params byte[][] keysAndArgs);

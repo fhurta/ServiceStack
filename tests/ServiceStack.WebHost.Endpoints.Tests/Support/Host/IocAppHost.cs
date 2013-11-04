@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Funq;
 using ServiceStack.Common;
 using ServiceStack.Configuration;
-using ServiceStack.ServiceHost;
+using ServiceStack.Web;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Services;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support.Host
@@ -48,7 +48,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support.Host
 	{
 		public T TryResolve<T>()
 		{
-			if (typeof(T) == typeof(IRequestContext))
+			if (typeof(T) == typeof(IRequest))
 				throw new ArgumentException("should not ask for IRequestContext");
 
 			if (typeof(T) == typeof(AltDepProperty))
@@ -56,7 +56,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support.Host
             if (typeof(T) == typeof(AltDepDisposableProperty))
                 return (T)(object)new AltDepDisposableProperty();
             if (typeof(T) == typeof(AltRequestScopeDepDisposableProperty))
-                return (T)(object)HostContext.Instance.GetOrCreate(() => new AltRequestScopeDepDisposableProperty());
+                return (T)(object)RequestContext.Instance.GetOrCreate(() => new AltRequestScopeDepDisposableProperty());
             
 			return default(T);
 		}
@@ -78,7 +78,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support.Host
     }
 
 
-    public class IocRequestFilterAttribute : Attribute, IHasRequestFilter
+    public class IocRequestFilterAttribute : AttributeBase, IHasRequestFilter
     {
         public FunqSingletonScope FunqSingletonScope { get; set; }
         public FunqRequestScope FunqRequestScope { get; set; }
@@ -88,7 +88,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support.Host
 
         public int Priority { get; set; }
 
-        public void RequestFilter(IHttpRequest req, IHttpResponse res, object requestDto)
+        public void RequestFilter(IRequest req, IResponse res, object requestDto)
         {
         }
 

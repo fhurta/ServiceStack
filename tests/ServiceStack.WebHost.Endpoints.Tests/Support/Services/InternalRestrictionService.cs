@@ -1,9 +1,8 @@
 using System.Runtime.Serialization;
-using ServiceStack.ServiceHost;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support.Services
 {
-	[Restrict(AccessTo = EndpointAttributes.InternalNetworkAccess)]
+	[Restrict(AccessTo = RequestAttributes.InternalNetworkAccess)]
 	[DataContract]
 	public class InternalRestriction { }
 

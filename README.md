@@ -7,7 +7,6 @@ You can catch some community members hanging out on [JabbR](http://jabbr.net/#/r
 Service Stack is a high-performance .NET web services platform that simplifies the development of high-performance 
 REST (JSON, XML, JSV, HTML, MsgPack, ProtoBuf, CSV) and WCF SOAP [Web Services](https://github.com/ServiceStack/ServiceStack/wiki/Service-Stack-Web-Services). 
 
-_Note: the source code is provided as-is - no direct or commercial support is available for ServiceStack_
 
 Simple REST service example
 =========================== 
@@ -115,6 +114,8 @@ That's all the application code required to create a simple REST web service.
  * [Example Apps and Demos](http://stackoverflow.com/questions/15862634/in-what-order-are-the-servicestack-examples-supposed-to-be-grokked/15869816#15869816)
  * [Community resources](https://github.com/ServiceStack/ServiceStack/wiki/Community-Resources)
 
+### [Release Notes](https://github.com/ServiceStack/ServiceStack/wiki/Release-Notes)
+
 ## Download
 
 If you have [NuGet](http://nuget.org) installed, the easiest way to get started is to install ServiceStack via NuGet:
@@ -125,7 +126,7 @@ ServiceStack binaries only: Minimal installation of ServiceStack containing only
 ServiceStack with Razor Support: Create an empty ASP.NET Web or Console Application and (.NET 4.0+)
 ![Install-Pacakage ServiceStack.Razor2](http://www.servicestack.net/img/nuget-servicestack.razor.png)
 
-_Note: the binary packages are provided as-is - no direct or commercial support is available for ServiceStack_
+_Commercial support will be available for ServiceStack, contact team@servicestack.net for details_
 
 ### Examples
 
@@ -141,16 +142,23 @@ extracting them from the published NuGet packages. The url to download a nuget p
     
  So to get the core ServiceStack and ServiceStack.Text libs in OSX/Linux (or using gnu tools for Windows) you can just do:
 
-    wget -O ServiceStack http://packages.nuget.org/api/v1/package/ServiceStack/3.9.58
+    wget -O ServiceStack http://packages.nuget.org/api/v1/package/ServiceStack/3.9.62
     unzip ServiceStack 'lib/*'
     
-    wget -O ServiceStack.Text http://packages.nuget.org/api/v1/package/ServiceStack.Text/3.9.58
+    wget -O ServiceStack.Text http://packages.nuget.org/api/v1/package/ServiceStack.Text/3.9.62
     unzip ServiceStack.Text 'lib/*'
 
 which will download and extract the dlls into your local local `lib/` folder.
 
+## Copying
 
-[Release notes for major releases](https://github.com/ServiceStack/ServiceStack/wiki/Release-Notes)
+Since September 2013, ServiceStack source code is available under GNU Affero General Public License/FOSS License Exception, see license.txt in the source. 
+Alternative commercial licensing is also available, contact team@servicestack.net for details.
+
+## Contributing
+
+Commits should be made to the **v3-fixes** branch so they can be merged into both **v3** and **master** (v4) release branches. 
+Contributors need to approve the [Contributor License Agreement](https://docs.google.com/forms/d/16Op0fmKaqYtxGL4sg7w_g-cXXyCoWjzppgkuqzOeKyk/viewform) before any code will be reviewed, see the [Contributing wiki](https://github.com/ServiceStack/ServiceStack/wiki/Contributing) for more details. 
 
 ## OSS Libraries used
 
@@ -167,6 +175,7 @@ Each library is released under its respective licence:
   - [MarkdownDeep](https://github.com/toptensoftware/markdowndeep) [(License)](http://www.toptensoftware.com/markdowndeep/license)
 
 ## Similar open source projects
+
 Similar Open source .NET projects for developing or accessing web services include:
 
  * [Nancy Fx](http://nancyfx.org) - A Sinatra-inspired lightweight Web Framework for .NET:
@@ -226,7 +235,7 @@ A big thanks to GitHub and all of ServiceStack's contributors:
  - [matthieugd](https://github.com/matthieugd) (Matthieu)
  - [tomaszkubacki](https://github.com/tomaszkubacki) (Tomasz Kubacki)
  - [e11137](https://github.com/e11137) (Rogelio Canedo)
- - [davrot](https://github.com/davrot) (David Roth)
+ - [davidroth](https://github.com/davidroth) (David Roth)
  - [meebey](https://github.com/meebey) (Mirco Bauer)
  - [codedemonuk](https://github.com/codedemonuk) (Pervez Choudhury)
  - [jrosskopf](https://github.com/jrosskopf) (Joachim Rosskopf)
@@ -313,7 +322,7 @@ A big thanks to GitHub and all of ServiceStack's contributors:
  - [cheesebaron](https://github.com/cheesebaron) (Tomasz Cielecki)
  - [mikkelfish](https://github.com/mikkelfish) (Mikkel Fishman)
  - [johngibb](https://github.com/johngibb) (John Gibb)
- - [gixug](https://github.com/gixug) (David Stone)
+ - [stabbylambda](https://github.com/stabbylambda) (David Stone)
  - [mikepugh](https://github.com/mikepugh) (Mike Pugh)
  - [permalmberg](https://github.com/permalmberg) (Per Malmberg)
  - [adamralph](https://github.com/adamralph) (Adam Ralph)
@@ -394,7 +403,7 @@ A big thanks to GitHub and all of ServiceStack's contributors:
  - [ddotlic](https://github.com/ddotlic) (Drazen Dotlic)
  - [chrismcv](https://github.com/chrismcv) (Chris McVittie)
  - [marcioalthmann](https://github.com/marcioalthmann) (Márcio Fábio Althmann)
- - [mmertsock](https://github.com/mmertsock)
+ - [mmertsock](https://github.com/mmertsock) (Mike Mertsock)
  - [johnkamau](https://github.com/johnkamau) (John Kamau)
  - [uhaciogullari](https://github.com/uhaciogullari) (Ufuk Hacıoğulları)
  - [davybrion](https://github.com/davybrion) (Davy Brion)
@@ -407,7 +416,84 @@ A big thanks to GitHub and all of ServiceStack's contributors:
  - [kojoru](https://github.com/kojoru)
  - [jeremy-bridges](https://github.com/jeremy-bridges) (Jeremy Bridges)
  - [andreabalducci](https://github.com/andreabalducci) (Andrea Balducci)
+ - [robertthegrey](https://github.com/RobertTheGrey) (Robert Greyling)
+ - [robertbeal](https://github.com/robertbeal) (Robert Beal)
+ - [improvedk](https://github.com/improvedk) (Mark Rasmussen)
+ - [foresterh](https://github.com/foresterh) (Jamie Houston)
+ - [peterkahl](https://github.com/peterkahl) (Peter Kahl)
+ - [helgel](https://github.com/helgel)
+ - [anthonycarl](https://github.com/anthonycarl) (Anthony Carl)
+ - [mrjul](https://github.com/mrjul) (Julien Lebosquain)
+ - [pwhe23](https://github.com/pwhe23) (Paul Wheeler)
+ - [aleksd](https://github.com/aleksd)
+ - [miketrebilcock](https://github.com/miketrebilcock) (Mike Trebilcock)
+ - [markwoodhall](https://github.com/markwoodhall) (Mark Woodhall)
+ - [theonlylawislove](https://github.com/theonlylawislove) (Paul Knopf)
+ - [callumvass](https://github.com/callumvass) (Callum Vass)
+ - [bpruitt-goddard](https://github.com/bpruitt-goddard)
+ - [gregpakes](https://github.com/gregpakes) (Greg Pakes)
+ - [caspiancanuck](https://github.com/caspiancanuck) (Caspian Canuck)
+ - [merwer](https://github.com/merwer)
+ - [pavelsavara](https://github.com/pavelsavara) (Pavel Savara)
+ - [markwalls](https://github.com/markwalls) (Mark Walls)
+ - [prasannavl](https://github.com/prasannavl) (Prasanna Loganathar)
+ - [wilfrem](https://github.com/wilfrem)
+ - [emiba](https://github.com/emiba)
+ - [lucky-ly](https://github.com/lucky-ly) (Dmitry Svechnikov)
+ - [hhandoko](https://github.com/hhandoko) (Herdy Handoko)
+ - [datawingsoftware](https://github.com/datawingsoftware)
+ - [tal952](https://github.com/tal952)
+ - [bretternst](https://github.com/bretternst)
+ - [kevinhoward](https://github.com/kevinhoward) (Kevin Howard)
+ - [mattbutton](https://github.com/mattbutton) (Matt Button)
+ - [torbenrahbekkoch](https://github.com/torbenrahbekkoch) (Torben Rahbek Koch)
+ - [pilotmartin](https://github.com/pilotmartin) (Pilot Martin)
+ - [catlion](https://github.com/catlion)
+ - [tstade](https://github.com/tstade) (Toft Stade)
+ - [niltz](https://github.com/niltz) (Jeff Sawatzky)
+ - [nhalm](https://github.com/nhalm)
+ - [fhurta](https://github.com/fhurta) (Filip Hurta)
+ - [discobanan](https://github.com/discobanan)
+ - [x-cray](https://github.com/x-cray)
+ - [jeremistadler](https://github.com/jeremistadler) (Jeremi Stadler)
+ - [bangbite](https://github.com/bangbite)
+ - [felipesabino](https://github.com/felipesabino) (Felipe Sabino)
+ - [xelom](https://github.com/xelom) (Arıl Bozoluk)
+ - [shiweichuan](https://github.com/shiweichuan) (Weichuan Shi)
+ - [kojoru](https://github.com/kojoru) (Konstantin Yakushev)
+ - [eddiegroves](https://github.com/eddiegroves) (Eddie Groves)
+ - [fetters5](https://github.com/fetters5)
+ - [rcollette](https://github.com/rcollette) (Richard Collette)
+ - [urihendler](https://github.com/urihendler) (Uri Hendler)
+ - [laurencee](https://github.com/laurencee) (Laurence Evans)
+ - [m-andrew-albright](https://github.com/m-andrew-albright) (Andrew Albright)
+ - [lee337](https://github.com/lee337) (Lee Venkatsamy)
+ - [kaza](https://github.com/kaza)
+ - [mishfit](https://github.com/mishfit)
+ - [rfvgyhn](https://github.com/rfvgyhn) (Chris)
+ - [caioproiete](https://github.com/caioproiete) (Caio Proiete)
+ - [sjuxax](https://github.com/sjuxax) (Jeff Cook)
+ - [madaleno](https://github.com/madaleno) (Luis Madaleno)
+ - [yavosh](https://github.com/yavosh) (Yavor Shahpasov)
+ - [fvoncina](https://github.com/fvoncina) (Facundo Voncina)
+ - [devrios](https://github.com/devrios) (Dev Rios)
+ - [bfkelsey](https://github.com/bfkelsey) (Ben Kelsey)
+ - [maksimenko](https://github.com/maksimenko)
+ - [dixon](https://github.com/dixon) (Jarrod Dixon)
+ - [kal](https://github.com/kal) (Kal Ahmed)
+ - [mhanney](https://github.com/mhanney) (Michael Hanney)
+ - [bcms](https://github.com/bcms)
+ - [mgravell](https://github.com/mgravell) (Marc Gravell)
+ - [lafama](https://github.com/lafama) (Denis Ndwiga)
+ - [jamesgroat](https://github.com/jamesgroat) (James Groat)
+ - [jamesearl](https://github.com/jamesearl) (James Cunningham)
+ - [remkoboschker](https://github.com/remkoboschker) (Remko Boschker)
+ - [shelakel](https://github.com/shelakel)
+ - [schmidt4brains](https://github.com/schmidt4brains) (Doug Schmidt)
+ - [joplaal](https://github.com/joplaal)
+ - [aifdsc](https://github.com/aifdsc) (Stephan Desmoulin)
+
 
 ***
 
-Runs on both Mono and .NET 3.5. _(Live preview hosted on Mono / CentOS)_
+Runs on both Mono and .NET _(Live preview hosted on Mono / Ubuntu)_

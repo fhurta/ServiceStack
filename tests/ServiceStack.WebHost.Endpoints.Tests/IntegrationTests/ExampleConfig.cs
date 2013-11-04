@@ -1,4 +1,3 @@
-using ServiceStack.Common.Utils;
 using ServiceStack.Configuration;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
@@ -12,7 +11,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests.IntegrationTests
 
 		public ExampleConfig() { }
 
-		public ExampleConfig(IResourceManager appConfig)
+		public ExampleConfig(IAppSettings appConfig)
 		{
 			ConnectionString = appConfig.GetString("ConnectionString");
 			DefaultFibonacciLimit = appConfig.Get("DefaultFibonacciLimit", 10);

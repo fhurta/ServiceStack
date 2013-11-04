@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.Serialization;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceHost;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.IntegrationTests.Services
 {
@@ -21,9 +20,9 @@ namespace ServiceStack.WebHost.IntegrationTests.Services
 		public string Result { get; set; }
 	}
 
-	public class VerbMatch1Service : IService<VerbMatch1>, IRestService<VerbMatch1>
+	public class VerbMatch1Service : IService
 	{
-		public object Execute(VerbMatch1 request)
+		public object Any(VerbMatch1 request)
 		{
 			throw new NotImplementedException();
 		}

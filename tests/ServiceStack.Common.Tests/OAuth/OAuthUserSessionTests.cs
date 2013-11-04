@@ -2,15 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using NUnit.Framework;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.Auth;
+using ServiceStack.Auth;
+using ServiceStack.Testing;
 using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.Common.Tests.OAuth
 {
     [TestFixture]
     public class OAuthUserSessionTests : OAuthUserSessionTestsBase
     {
+        private ServiceStackHost appHost;
+
+        [TestFixtureSetUp]
+        public void TestFixtureSetUp()
+        {
+            appHost = new BasicAppHost().Init();
+        }
+
+        [TestFixtureTearDown]
+        public void TestFixtureTearDown()
+        {
+            appHost.Dispose();
+        }
+
         [Test, TestCaseSource("UserAuthRepositorys")]
         public void Does_persist_TwitterOAuth(IUserAuthRepository userAuthRepository)
         {
@@ -36,7 +51,7 @@ namespace ServiceStack.Common.Tests.OAuth
             Assert.That(userAuth.Id.ToString(CultureInfo.InvariantCulture), Is.EqualTo(oAuthUserSession.UserAuthId));
             Assert.That(userAuth.DisplayName, Is.EqualTo("Demis Bellot TW"));
 
-            var authProviders = userAuthRepository.GetUserOAuthProviders(oAuthUserSession.UserAuthId);
+            var authProviders = userAuthRepository.GetUserAuthDetails(oAuthUserSession.UserAuthId);
             Assert.That(authProviders.Count, Is.EqualTo(1));
             var authProvider = authProviders[0];
             Assert.That(authProvider.UserAuthId, Is.EqualTo(userAuth.Id));
@@ -74,7 +89,7 @@ namespace ServiceStack.Common.Tests.OAuth
             Assert.That(userAuth.LastName, Is.EqualTo(serviceTokens.LastName));
             Assert.That(userAuth.PrimaryEmail, Is.EqualTo(serviceTokens.Email));
 
-            var authProviders = userAuthRepository.GetUserOAuthProviders(oAuthUserSession.UserAuthId);
+            var authProviders = userAuthRepository.GetUserAuthDetails(oAuthUserSession.UserAuthId);
             Assert.That(authProviders.Count, Is.EqualTo(1));
             var authProvider = authProviders[0];
             Assert.That(authProvider.UserAuthId, Is.EqualTo(userAuth.Id));
@@ -123,7 +138,7 @@ namespace ServiceStack.Common.Tests.OAuth
             Assert.That(userAuth.FirstName, Is.EqualTo(serviceTokensFb.FirstName));
             Assert.That(userAuth.LastName, Is.EqualTo(serviceTokensFb.LastName));
 
-            var authProviders = userAuthRepository.GetUserOAuthProviders(oAuthUserSession.UserAuthId);
+            var authProviders = userAuthRepository.GetUserAuthDetails(oAuthUserSession.UserAuthId);
             Assert.That(authProviders.Count, Is.EqualTo(2));
 
             Console.WriteLine(userAuth.Dump());
@@ -137,7 +152,7 @@ namespace ServiceStack.Common.Tests.OAuth
 
             var registrationService = GetRegistrationService(userAuthRepository);
 
-            var responseObj = registrationService.Post(registrationDto);
+            var responseObj = registrationService.Post(RegisterDto);
 
             var httpResult = responseObj as IHttpResult;
             if (httpResult != null)
@@ -145,28 +160,28 @@ namespace ServiceStack.Common.Tests.OAuth
                 Assert.Fail("HttpResult found: " + httpResult.Dump());
             }
 
-            var response = (RegistrationResponse)responseObj;
+            var response = (RegisterResponse)responseObj;
             Assert.That(response.UserId, Is.Not.Null);
 
             var userAuth = userAuthRepository.GetUserAuth(response.UserId);
-            AssertEqual(userAuth, registrationDto);
+            AssertEqual(userAuth, RegisterDto);
 
-            userAuth = userAuthRepository.GetUserAuthByUserName(registrationDto.UserName);
-            AssertEqual(userAuth, registrationDto);
+            userAuth = userAuthRepository.GetUserAuthByUserName(RegisterDto.UserName);
+            AssertEqual(userAuth, RegisterDto);
 
-            userAuth = userAuthRepository.GetUserAuthByUserName(registrationDto.Email);
-            AssertEqual(userAuth, registrationDto);
+            userAuth = userAuthRepository.GetUserAuthByUserName(RegisterDto.Email);
+            AssertEqual(userAuth, RegisterDto);
 
-            UserAuth userId;
-            var success = userAuthRepository.TryAuthenticate(registrationDto.UserName, registrationDto.Password, out userId);
+            IUserAuth userId;
+            var success = userAuthRepository.TryAuthenticate(RegisterDto.UserName, RegisterDto.Password, out userId);
             Assert.That(success, Is.True);
             Assert.That(userId, Is.Not.Null);
 
-            success = userAuthRepository.TryAuthenticate(registrationDto.Email, registrationDto.Password, out userId);
+            success = userAuthRepository.TryAuthenticate(RegisterDto.Email, RegisterDto.Password, out userId);
             Assert.That(success, Is.True);
             Assert.That(userId, Is.Not.Null);
 
-            success = userAuthRepository.TryAuthenticate(registrationDto.UserName, "Bad Password", out userId);
+            success = userAuthRepository.TryAuthenticate(RegisterDto.UserName, "Bad Password", out userId);
             Assert.That(success, Is.False);
             Assert.That(userId, Is.Null);
         }
@@ -194,18 +209,18 @@ namespace ServiceStack.Common.Tests.OAuth
             //Register
             var registrationService = GetRegistrationService(userAuthRepository, oAuthUserSession, requestContext);
 
-            var responseObj = registrationService.Post(registrationDto);
+            var responseObj = registrationService.Post(RegisterDto);
             Assert.That(responseObj as IHttpError, Is.Null, responseObj.ToString());
 
             Console.WriteLine("UserId: " + oAuthUserSession.UserAuthId);
 
             var credentialsAuth = GetCredentialsAuthConfig();
             var loginResponse = credentialsAuth.Authenticate(service, oAuthUserSession,
-                new Auth
+                new Authenticate
                 {
                     provider = CredentialsAuthProvider.Name,
-                    UserName = registrationDto.UserName,
-                    Password = registrationDto.Password,
+                    UserName = RegisterDto.UserName,
+                    Password = RegisterDto.Password,
                 });
 
 			loginResponse.PrintDump();
@@ -216,16 +231,16 @@ namespace ServiceStack.Common.Tests.OAuth
 
             var userAuth = userAuthRepository.GetUserAuth(oAuthUserSession.UserAuthId);
             Assert.That(userAuth.Id.ToString(CultureInfo.InvariantCulture), Is.EqualTo(oAuthUserSession.UserAuthId));
-            Assert.That(userAuth.DisplayName, Is.EqualTo(registrationDto.DisplayName));
-            Assert.That(userAuth.FirstName, Is.EqualTo(registrationDto.FirstName));
-            Assert.That(userAuth.LastName, Is.EqualTo(registrationDto.LastName));
-            Assert.That(userAuth.Email, Is.EqualTo(registrationDto.Email));
+            Assert.That(userAuth.DisplayName, Is.EqualTo(RegisterDto.DisplayName));
+            Assert.That(userAuth.FirstName, Is.EqualTo(RegisterDto.FirstName));
+            Assert.That(userAuth.LastName, Is.EqualTo(RegisterDto.LastName));
+            Assert.That(userAuth.Email, Is.EqualTo(RegisterDto.Email));
 
             Console.WriteLine(oAuthUserSession.Dump());
             Assert.That(oAuthUserSession.ProviderOAuthAccess.Count, Is.EqualTo(2));
             Assert.That(oAuthUserSession.IsAuthenticated, Is.True);
 
-            var authProviders = userAuthRepository.GetUserOAuthProviders(oAuthUserSession.UserAuthId);
+            var authProviders = userAuthRepository.GetUserAuthDetails(oAuthUserSession.UserAuthId);
             Assert.That(authProviders.Count, Is.EqualTo(2));
 
             Console.WriteLine(userAuth.Dump());
@@ -243,15 +258,15 @@ namespace ServiceStack.Common.Tests.OAuth
 
             requestContext.RemoveSession();
 
-            var userName1 = registrationDto.UserName;
+            var userName1 = RegisterDto.UserName;
             var userName2 = "UserName2";
-            registrationDto.UserName = userName2;
-            registrationDto.Email = "as@if2.com";
+            RegisterDto.UserName = userName2;
+            RegisterDto.Email = "as@if2.com";
 
             var userAuth1 = userAuthRepository.GetUserAuthByUserName(userName1);
             Assert.That(userAuth1, Is.Not.Null);
 
-            Register(userAuthRepository, oAuthUserSession, registrationDto);
+            Register(userAuthRepository, oAuthUserSession, RegisterDto);
 
             userAuth1 = userAuthRepository.GetUserAuthByUserName(userName1);
             var userAuth2 = userAuthRepository.GetUserAuthByUserName(userName2);
@@ -269,11 +284,11 @@ namespace ServiceStack.Common.Tests.OAuth
 
             oAuthUserSession = RegisterAndLogin(userAuthRepository, oAuthUserSession);
 
-            var userName1 = registrationDto.UserName;
+            var userName1 = RegisterDto.UserName;
             var userName2 = "UserName2";
-            registrationDto.UserName = userName2;
+            RegisterDto.UserName = userName2;
 
-            Register(userAuthRepository, oAuthUserSession, registrationDto);
+            Register(userAuthRepository, oAuthUserSession, RegisterDto);
 
             var userAuth1 = userAuthRepository.GetUserAuthByUserName(userName1);
             var userAuth2 = userAuthRepository.GetUserAuthByUserName(userName2);
@@ -293,24 +308,24 @@ namespace ServiceStack.Common.Tests.OAuth
 
             LoginWithFacebook(oAuthUserSession);
 
-            var userAuth = userAuthRepository.GetUserAuthByUserName(registrationDto.UserName);
+            var userAuth = userAuthRepository.GetUserAuthByUserName(RegisterDto.UserName);
 
-            Assert.That(userAuth.UserName, Is.EqualTo(registrationDto.UserName));
+            Assert.That(userAuth.UserName, Is.EqualTo(RegisterDto.UserName));
 
-            var userAuthProviders = userAuthRepository.GetUserOAuthProviders(userAuth.Id.ToString(CultureInfo.InvariantCulture));
+            var userAuthProviders = userAuthRepository.GetUserAuthDetails(userAuth.Id.ToString(CultureInfo.InvariantCulture));
             Assert.That(userAuthProviders.Count, Is.EqualTo(1));
         }
 
 		[Test, TestCaseSource("UserAuthRepositorys")]
-		public void Can_AutoLogin_whilst_Registering(IUserAuthRepository userAuthRepository)
+        public void Can_AutoLogin_whilst_Registering(IUserAuthRepository userAuthRepository)
 		{
-			InitTest(userAuthRepository);
-			var oAuthUserSession = requestContext.ReloadSession();
-			registrationDto.AutoLogin = true;
-			Register(userAuthRepository, oAuthUserSession, registrationDto);
+            InitTest(userAuthRepository);
+            var oAuthUserSession = requestContext.ReloadSession();
+            RegisterDto.AutoLogin = true;
+            Register(userAuthRepository, oAuthUserSession, RegisterDto);
 
-			oAuthUserSession = requestContext.ReloadSession();
-			Assert.That(oAuthUserSession.IsAuthenticated, Is.True);
+            oAuthUserSession = requestContext.ReloadSession();
+            Assert.That(oAuthUserSession.IsAuthenticated, Is.True);
 		}
 
     }

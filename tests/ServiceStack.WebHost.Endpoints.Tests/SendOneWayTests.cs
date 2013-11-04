@@ -1,21 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Threading;
-using ServiceStack.Common.Web;
-using ServiceStack.Service;
-using ServiceStack.ServiceHost;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceInterface;
-using ServiceStack.CacheAccess;
-using ServiceStack.CacheAccess.Providers;
-using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Utils;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -37,17 +25,17 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public string Title { get; set; }
     }    
 
-    public class OneWayService : ServiceInterface.Service
+    public class OneWayService : Service
     {
         public static string LastResult { get; set; }
         public void Delete(DeleteOneWayRequest oneWayRequest)
         {
-            LastResult = oneWayRequest.Prefix + " " + Request.HttpMethod;
+            LastResult = oneWayRequest.Prefix + " " + Request.Verb;
         }
 
         public void Post(PostOneWayRequest oneWayRequest)
         {
-            LastResult = oneWayRequest.Prefix + " " + Request.HttpMethod + oneWayRequest.Title;
+            LastResult = oneWayRequest.Prefix + " " + Request.Verb + oneWayRequest.Title;
         }
 
         public void Put(PostOneWayRequest oneWayRequest)

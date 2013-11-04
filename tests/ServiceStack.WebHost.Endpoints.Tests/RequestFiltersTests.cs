@@ -4,14 +4,16 @@ using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.Common.Web;
-using ServiceStack.Service;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.Host;
+using ServiceStack.Host.Handlers;
+using ServiceStack.Support;
+using ServiceStack.Support.WebHost;
+using ServiceStack.Testing;
 using ServiceStack.Text;
+using ServiceStack.Web;
 using ServiceStack.WebHost.Endpoints.Support;
 using ServiceStack.WebHost.Endpoints.Tests.Support;
 using ServiceStack.WebHost.Endpoints.Tests.Support.Host;
@@ -36,9 +38,9 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public ResponseStatus ResponseStatus { get; set; }
 	}
 
-	public class SecureService : IService<Secure>
+	public class SecureService : IService
 	{
-		public object Execute(Secure request)
+		public object Any(Secure request)
 		{
 			return new SecureResponse { Result = "Confidential" };
 		}
@@ -62,9 +64,9 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public ResponseStatus ResponseStatus { get; set; }
 	}
 
-	public class InsecureService : IService<Insecure>
+	public class InsecureService : IService
 	{
-		public object Execute(Insecure request)
+		public object Any(Insecure request)
 		{
 			return new InsecureResponse { Result = "Public" };
 		}
@@ -89,7 +91,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
 			public override void Configure(Container container)
 			{
-				this.RequestFilters.Add((req, res, dto) =>
+				this.GlobalRequestFilters.Add((req, res, dto) =>
 				{
 					var userPass = req.GetBasicAuthUserAndPassword();
 					if (userPass == null)
@@ -108,7 +110,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 						res.SetPermanentCookie("ss-session", sessionKey);
 					}
 				});
-				this.RequestFilters.Add((req, res, dto) =>
+				this.GlobalRequestFilters.Add((req, res, dto) =>
 				{
 					if (dto is Secure)
 					{
@@ -137,7 +139,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		public void OnTestFixtureTearDown()
 		{
 			appHost.Dispose();
-            EndpointHandlerBase.ServiceManager = null;
 		}
 
 		protected abstract IServiceClient CreateNewServiceClient();
@@ -168,7 +169,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			Assert.Fail(ex.Message);
 		}
 
-		private static bool Assert401(object response, Exception ex)
+		private static bool Assert401(Exception ex)
 		{
 			var webEx = (WebServiceException)ex;
 			Assert.That(webEx.StatusCode, Is.EqualTo(401));
@@ -182,7 +183,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			if (format == null) return;
 
 			var req = (HttpWebRequest)WebRequest.Create(
-				string.Format("http://localhost:82/{0}/syncreply/Secure", format));
+				string.Format("http://localhost:82/{0}/reply/Secure", format));
 
 			req.Headers[HttpHeaders.Authorization]
 				= "basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(AllowedUser + ":" + AllowedPass));
@@ -207,7 +208,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		}
 
 		[Test]
-		public void Can_login_with_Basic_auth_to_access_Secure_service_using_RestClientAsync()
+        public async Task Can_login_with_Basic_auth_to_access_Secure_service_using_RestClientAsync()
 		{
 			var format = GetFormat();
 			if (format == null) return;
@@ -215,11 +216,8 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			var client = CreateNewRestClientAsync();
 			client.SetCredentials(AllowedUser, AllowedPass);
 
-			SecureResponse response = null;
-			client.GetAsync<SecureResponse>(ServiceClientBaseUri + "secure",
-				r => response = r, FailOnAsyncError);
+			var response = await client.GetAsync<SecureResponse>(ServiceClientBaseUri + "secure");
 
-			Thread.Sleep(2000);
 			Assert.That(response.Result, Is.EqualTo("Confidential"));
 		}
 
@@ -230,7 +228,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			if (format == null) return;
 
 			var req = (HttpWebRequest)WebRequest.Create(
-				string.Format("{0}{1}/syncreply/Insecure", ServiceClientBaseUri, format));
+				string.Format("{0}{1}/reply/Insecure", ServiceClientBaseUri, format));
 
 			req.Headers[HttpHeaders.Authorization]
 				= "basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(AllowedUser + ":" + AllowedPass));
@@ -254,18 +252,15 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		}
 
 		[Test]
-		public void Can_login_without_authorization_to_access_Insecure_service_using_RestClientAsync()
+        public async Task Can_login_without_authorization_to_access_Insecure_service_using_RestClientAsync()
 		{
 			var format = GetFormat();
 			if (format == null) return;
 
 			var client = CreateNewRestClientAsync();
 
-			InsecureResponse response = null;
-			client.GetAsync<InsecureResponse>(ServiceClientBaseUri + "insecure",
-				r => response = r, FailOnAsyncError);
+			var response = await client.GetAsync<InsecureResponse>(ServiceClientBaseUri + "insecure");
 
-			Thread.Sleep(2000);
 			Assert.That(response.Result, Is.EqualTo("Public"));
 		}
 
@@ -276,7 +271,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			if (format == null) return;
 
 			var req = (HttpWebRequest)WebRequest.Create(
-				string.Format("http://localhost:82/{0}/syncreply/Secure", format));
+				string.Format("http://localhost:82/{0}/reply/Secure", format));
 
 			req.Headers[HttpHeaders.Authorization]
 				= "basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(AllowedUser + ":" + AllowedPass));
@@ -286,7 +281,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			if (cookie != null)
 			{
 				req = (HttpWebRequest)WebRequest.Create(
-					string.Format("http://localhost:82/{0}/syncreply/Secure", format));
+					string.Format("http://localhost:82/{0}/reply/Secure", format));
 				req.CookieContainer.Add(new Cookie("ss-session", cookie.Value));
 
 				var dtoString = new StreamReader(req.GetResponse().GetResponseStream()).ReadToEnd();
@@ -302,7 +297,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 			if (format == null) return;
 
 			var req = (HttpWebRequest)WebRequest.Create(
-				string.Format("http://localhost:82/{0}/syncreply/Secure", format));
+				string.Format("http://localhost:82/{0}/reply/Secure", format));
 
 			req.CookieContainer = new CookieContainer();
 			req.CookieContainer.Add(new Cookie("ss-session", AllowedUser + "/" + Guid.NewGuid().ToString("N"), "/", "localhost"));
@@ -336,81 +331,83 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 		}
 
 		[Test]
-		public void Get_401_When_accessing_Secure_using_RestClient_GET_without_Authorization()
+        public async Task Get_401_When_accessing_Secure_using_RestClient_GET_without_Authorization()
 		{
 			var client = CreateNewRestClientAsync();
 			if (client == null) return;
 
-			SecureResponse response = null;
-			var wasError = false;
-			client.GetAsync<SecureResponse>(ServiceClientBaseUri + "secure",
-				r => response = r, (r, ex) => wasError = Assert401(r, ex));
-
-			Thread.Sleep(1000);
-			Assert.That(wasError, Is.True,
-				"Should throw WebServiceException.StatusCode == 401");
-			Assert.IsNull(response);
+            try
+            {
+                await client.GetAsync<SecureResponse>(ServiceClientBaseUri + "secure");
+                Assert.Fail("Should throw WebServiceException.StatusCode == 401");
+            }
+            catch (WebServiceException webEx)
+            {
+                Assert401(webEx);
+                Assert.That(webEx.ResponseDto, Is.Null);
+            }
 		}
 
 		[Test]
-		public void Get_401_When_accessing_Secure_using_RestClient_DELETE_without_Authorization()
+        public async Task Get_401_When_accessing_Secure_using_RestClient_DELETE_without_Authorization()
 		{
 			var client = CreateNewRestClientAsync();
 			if (client == null) return;
 
-			SecureResponse response = null;
-			var wasError = false;
-			client.DeleteAsync<SecureResponse>(ServiceClientBaseUri + "secure",
-				r => response = r, (r, ex) => wasError = Assert401(r, ex));
-
-			Thread.Sleep(1000);
-			Assert.That(wasError, Is.True,
-				"Should throw WebServiceException.StatusCode == 401");
-			Assert.IsNull(response);
+            try
+            {
+                await client.DeleteAsync<SecureResponse>(ServiceClientBaseUri + "secure");
+                Assert.Fail("Should throw WebServiceException.StatusCode == 401");
+            }
+            catch (WebServiceException webEx)
+            {
+                Assert401(webEx);
+                Assert.That(webEx.ResponseDto, Is.Null);
+            }
 		}
 
 		[Test]
-		public void Get_401_When_accessing_Secure_using_RestClient_POST_without_Authorization()
+        public async Task Get_401_When_accessing_Secure_using_RestClient_POST_without_Authorization()
 		{
 			var client = CreateNewRestClientAsync();
 			if (client == null) return;
 
-			SecureResponse response = null;
-			var wasError = false;
-			client.PostAsync<SecureResponse>(ServiceClientBaseUri + "secure", new Secure(),
-				r => response = r, (r, ex) => wasError = Assert401(r, ex));
-
-			Thread.Sleep(1000);
-			Assert.That(wasError, Is.True,
-				"Should throw WebServiceException.StatusCode == 401");
-			Assert.IsNull(response);
+            try
+            {
+                await client.PostAsync<SecureResponse>(ServiceClientBaseUri + "secure", new Secure());
+                Assert.Fail("Should throw WebServiceException.StatusCode == 401");
+            }
+            catch (WebServiceException webEx)
+            {
+                Assert401(webEx);
+                Assert.That(webEx.ResponseDto, Is.Null);
+            }
 		}
 
 		[Test]
-		public void Get_401_When_accessing_Secure_using_RestClient_PUT_without_Authorization()
+        public async Task Get_401_When_accessing_Secure_using_RestClient_PUT_without_Authorization()
 		{
 			var client = CreateNewRestClientAsync();
 			if (client == null) return;
 
-			SecureResponse response = null;
-			var wasError = false;
-			client.PutAsync<SecureResponse>(ServiceClientBaseUri + "secure", new Secure(),
-				r => response = r, (r, ex) => wasError = Assert401(r, ex));
-
-			Thread.Sleep(1000);
-			Assert.That(wasError, Is.True,
-						"Should throw WebServiceException.StatusCode == 401");
-			Assert.IsNull(response);
+            try
+            {
+                await client.PutAsync<SecureResponse>(ServiceClientBaseUri + "secure", new Secure());
+                Assert.Fail("Should throw WebServiceException.StatusCode == 401");
+            }
+            catch (WebServiceException webEx)
+            {
+                Assert401(webEx);
+                Assert.That(webEx.ResponseDto, Is.Null);
+            }
 		}
-
 
 		public class UnitTests : RequestFiltersTests
 		{
 			protected override IServiceClient CreateNewServiceClient()
 			{
-				EndpointHandlerBase.ServiceManager = new ServiceManager(true, typeof(SecureService).Assembly);
-				return new DirectServiceClient(EndpointHandlerBase.ServiceManager);
-			}
+                return new DirectServiceClient(appHost.ServiceController);
+            }
 
 			protected override IRestClientAsync CreateNewRestClientAsync()
 			{
@@ -434,7 +431,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
 			protected override IRestClientAsync CreateNewRestClientAsync()
 			{
-				return new XmlRestClientAsync(ServiceClientBaseUri);
+                return new XmlServiceClient(ServiceClientBaseUri);
 			}
 		}
 
@@ -453,7 +450,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
 			protected override IRestClientAsync CreateNewRestClientAsync()
 			{
-				return new JsonRestClientAsync(ServiceClientBaseUri);
+                return new JsonServiceClient(ServiceClientBaseUri);
 			}
 		}
 
@@ -472,7 +469,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
 			protected override IRestClientAsync CreateNewRestClientAsync()
 			{
-				return new JsvRestClientAsync(ServiceClientBaseUri);
+                return new JsvServiceClient(ServiceClientBaseUri);
 			}
 		}
 

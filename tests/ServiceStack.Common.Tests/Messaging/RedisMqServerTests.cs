@@ -2,11 +2,8 @@
 using NUnit.Framework;
 using ServiceStack.Configuration;
 using ServiceStack.Messaging;
+using ServiceStack.Messaging.Redis;
 using ServiceStack.Redis;
-using ServiceStack.Redis.Messaging;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.WebHost.Endpoints;
 
 namespace ServiceStack.Common.Tests.Messaging
 {
@@ -88,7 +85,6 @@ namespace ServiceStack.Common.Tests.Messaging
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]

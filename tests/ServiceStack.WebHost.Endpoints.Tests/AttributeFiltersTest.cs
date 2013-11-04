@@ -1,27 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.IO;
 using System.Linq;
-using System.Text;
+using ServiceStack.Caching;
 using ServiceStack.Common.Tests.ServiceClient.Web;
-using ServiceStack.Common.Web;
-using ServiceStack.ServiceHost;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.Service;
-using ServiceStack.ServiceInterface;
-using ServiceStack.CacheAccess;
-using ServiceStack.CacheAccess.Providers;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.Support.WebHost;
 using ServiceStack.Text;
-using ServiceStack.WebHost.Endpoints.Utils;
+using ServiceStack.Web;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
 
     //Always executed
-    public class FilterTestAttribute : Attribute, IHasRequestFilter
+    public class FilterTestAttribute : AttributeBase, IHasRequestFilter
     {
         private static ICacheClient previousCache;
 
@@ -29,7 +20,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
         public int Priority { get; set; }
 
-        public void RequestFilter(IHttpRequest req, IHttpResponse res, object requestDto)
+        public void RequestFilter(IRequest req, IResponse res, object requestDto)
         {
             var dto = (AttributeFiltered)requestDto;
             dto.AttrsExecuted.Add(GetType().Name);
@@ -55,7 +46,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         {
         }
 
-        public override void Execute(IHttpRequest req, IHttpResponse res, object requestDto)
+        public override void Execute(IRequest req, IResponse res, object requestDto)
         {
             var dto = (AttributeFiltered)requestDto;
             dto.AttrsExecuted.Add(GetType().Name);
@@ -80,7 +71,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
     }
 
     //Always executed
-    public class ResponseFilterTestAttribute : Attribute, IHasResponseFilter
+    public class ResponseFilterTestAttribute : AttributeBase, IHasResponseFilter
     {
         private static ICacheClient previousCache;
 
@@ -88,9 +79,9 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
         public int Priority { get; set; }
 
-        public void ResponseFilter(IHttpRequest req, IHttpResponse res, object response)
+        public void ResponseFilter(IRequest req, IResponse res, object response)
         {
-            var dto = response.ToResponseDto() as AttributeFilteredResponse;
+            var dto = response.GetResponseDto() as AttributeFilteredResponse;
             dto.ResponseFilterExecuted = true;
             dto.ResponseFilterDependencyIsResolved = Cache != null && !Cache.Equals(previousCache);
 
@@ -111,7 +102,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         {
         }
 
-        public override void Execute(IHttpRequest req, IHttpResponse res, object responseDto)
+        public override void Execute(IRequest req, IResponse res, object responseDto)
         {
             var dto = responseDto as AttributeFilteredResponse;
             dto.ContextualResponseFilterExecuted = true;
@@ -120,7 +111,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
 
     public class ThrowingFilterAttribute : RequestFilterAttribute
     {
-        public override void Execute(IHttpRequest req, IHttpResponse res, object requestDto)
+        public override void Execute(IRequest req, IResponse res, object requestDto)
         {
             throw new ArgumentException("exception message");
         }
@@ -154,9 +145,9 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public bool ResponseFilterDependencyIsResolved { get; set; }
     }
 
-    public class AttributeFilteredService : IService<AttributeFiltered>
+    public class AttributeFilteredService : IService
     {
-        public object Execute(AttributeFiltered request)
+        public object Any(AttributeFiltered request)
         {
             return new AttributeFilteredResponse() {
                 ResponseFilterExecuted = false,
@@ -185,7 +176,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             public override void Configure(Funq.Container container)
             {
                 container.Register<ICacheClient>(c => new MemoryCacheClient()).ReusedWithin(Funq.ReuseScope.None);
-                SetConfig(new EndpointHostConfig { DebugMode = true }); //show stacktraces
+                SetConfig(new HostConfig { DebugMode = true }); //show stacktraces
             }
         }
 
@@ -295,7 +286,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 Priority = int.MinValue;
             }
 
-            public override void Execute(IHttpRequest req, IHttpResponse res, object requestDto)
+            public override void Execute(IRequest req, IResponse res, object requestDto)
             {
                 var dto = (AttributeFiltered)requestDto;
                 dto.AttrsExecuted.Add(GetType().Name);
@@ -312,9 +303,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         [Test]
         public void RequestFilters_are_prioritized()
         {
-            EndpointHost.ServiceManager = new ServiceManager(typeof(DummyHolder).Assembly);
-
-            EndpointHost.ServiceManager.Metadata.Add(typeof(AttributeFilteredService), typeof(DummyHolder), null);
+            appHost.Metadata.Add(typeof(AttributeFilteredService), typeof(DummyHolder), null);
 
             var attributes = FilterAttributeCache.GetRequestFilterAttributes(typeof(DummyHolder));
             var attrPriorities = attributes.ToList().ConvertAll(x => x.Priority);
@@ -337,7 +326,7 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             }
 
             var execOrderPriorities = execOrder.ToList().ConvertAll(x => x.Priority);
-            Console.WriteLine(execOrderPriorities.Dump());
+            execOrderPriorities.PrintDump();
             Assert.That(execOrderPriorities, Is.EquivalentTo(new[] { int.MinValue, -100, -90, -80, 0 }));
         }
     }

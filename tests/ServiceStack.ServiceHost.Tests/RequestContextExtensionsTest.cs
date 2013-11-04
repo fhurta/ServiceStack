@@ -1,9 +1,10 @@
 ﻿using NUnit.Framework;
-using ServiceStack.Common.Web;
+using ServiceStack.Formats;
+using ServiceStack.Host;
 using ServiceStack.ServiceHost.Tests.Formats;
-using ServiceStack.ServiceInterface.Testing;
-using ServiceStack.WebHost.Endpoints;
-using ServiceStack.WebHost.Endpoints.Formats;
+using ServiceStack.Testing;
+using ServiceStack.Text;
+using ServiceStack.Web;
 
 namespace ServiceStack.ServiceHost.Tests
 {
@@ -25,40 +26,37 @@ namespace ServiceStack.ServiceHost.Tests
         [Test]
         public void Can_optimize_json_result_with_ToOptimizedResult()
         {
-            CanOptimizeResult(ContentType.Json, null);
+            CanOptimizeResult(MimeTypes.Json, null);
         }
 
         [Test]
         public void Can_optimize_xml_result_with_ToOptimizedResult()
         {
-            CanOptimizeResult(ContentType.Xml, null);
+            CanOptimizeResult(MimeTypes.Xml, null);
         }
 
         [Test]
         public void Can_optimize_jsv_result_with_ToOptimizedResult()
         {
-            CanOptimizeResult(ContentType.Jsv, null);
+            CanOptimizeResult(MimeTypes.Jsv, null);
         }
 
         private static void CanOptimizeResult(string contentType, IPlugin pluginFormat)
         {
-            var dto = new TestDto {Name = "test"};
+            using (var appHost = new BasicAppHost().Init())
+            {
+                var dto = new TestDto { Name = "test" };
 
-            var httpReq = new MockHttpRequest();
-            httpReq.Headers.Add(HttpHeaders.AcceptEncoding, "gzip,deflate,sdch");
-            httpReq.ResponseContentType = contentType;
-            var httpRes = new ViewTests.MockHttpResponse();
+                var httpReq = new MockHttpRequest();
+                httpReq.Headers.Add(HttpHeaders.AcceptEncoding, "gzip,deflate,sdch");
+                httpReq.ResponseContentType = contentType;
 
-            var httpRequestContext = new HttpRequestContext(httpReq, httpRes, dto);
+                if (pluginFormat != null) pluginFormat.Register(appHost);
 
-            var appHost = new TestAppHost();
-            if (pluginFormat != null) pluginFormat.Register(appHost);
-
-            EndpointHost.ContentTypeFilter = appHost.ContentTypeFilters;
-
-            object result = httpRequestContext.ToOptimizedResult(dto);
-            Assert.IsNotNull(result);
-            Assert.IsTrue(result is CompressedResult);
+                object result = httpReq.ToOptimizedResult(dto);
+                Assert.IsNotNull(result);
+                Assert.IsTrue(result is CompressedResult);
+            }
         }
 
         public class TestDto

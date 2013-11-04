@@ -1,6 +1,5 @@
 using System;
 using NUnit.Framework;
-using ServiceStack.ServiceClient.Web;
 
 namespace ServiceStack.WebHost.Endpoints.Tests.Support
 {
@@ -30,7 +29,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests.Support
 		{
 			if (appHost == null) return;
 			appHost.Dispose();
-			appHost = null;
 		}
 
 		public void Send<TRes>(object request, Action<TRes> validate)

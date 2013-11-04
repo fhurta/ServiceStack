@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using NUnit.Framework;
 using ProtoBuf;
-using ServiceStack.Plugins.ProtoBuf;
-using ServiceStack.Service;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface.ServiceModel;
+using ServiceStack.ProtoBuf;
+using ServiceStack.ServiceModel;
+using ServiceStack.Text;
 
 namespace ServiceStack.WebHost.Endpoints.Tests
 {
@@ -154,12 +152,12 @@ namespace ServiceStack.WebHost.Endpoints.Tests
             {
                 appHost = new AppHost();
                 appHost.Init();
-                EndpointHost.Config.DebugMode = true;
+                appHost.Config.DebugMode = true;
                 appHost.Start("http://*:1337/");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                ex.ToString().Print();
             }
         }
 
@@ -167,7 +165,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
         public void TearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         static IRestClient[] ServiceClients = 
@@ -299,8 +296,6 @@ namespace ServiceStack.WebHost.Endpoints.Tests
                 Assert.AreEqual("Invalid Age", ex.ErrorMessage, "Wrong message");
             }
         }
-
-
+        
     }
-
 }

@@ -2,11 +2,7 @@
 using System.Linq;
 using Funq;
 using NUnit.Framework;
-using ServiceStack.Common;
-using ServiceStack.ServiceClient.Web;
-using ServiceStack.ServiceHost;
-using ServiceStack.ServiceInterface;
-using ServiceStack.WebHost.Endpoints;
+using ServiceStack;
 
 namespace NewApi.Todos
 {
@@ -120,7 +116,6 @@ namespace NewApi.Todos
         public void TestFixtureTearDown()
         {
             appHost.Dispose();
-            appHost = null;
         }
 
         [Test]

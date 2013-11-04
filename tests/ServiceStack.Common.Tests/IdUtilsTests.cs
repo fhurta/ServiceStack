@@ -1,9 +1,8 @@
 using System;
 using NUnit.Framework;
 using ServiceStack.Common.Tests.Models;
-using ServiceStack.Common.Utils;
 using ServiceStack.DataAnnotations;
-using ServiceStack.DesignPatterns.Model;
+using ServiceStack.Model;
 
 namespace ServiceStack.Common.Tests
 {
