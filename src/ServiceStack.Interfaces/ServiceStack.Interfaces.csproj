@@ -58,7 +58,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>servicestack-sn.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\..\WujiGridKey.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Signed|AnyCPU'">
     <OutputPath>bin\Signed\</OutputPath>
@@ -498,7 +498,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Redis\Redis.cd" />
-    <None Include="servicestack-sn.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Redis\Redis-annotated.png" />
